@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Math.max;
@@ -19,7 +18,7 @@ public class Paper {
     private final int cited_count;
     private final String pdf_url;
     private final int year;
-    private ArrayList<Paper> relations = new ArrayList<Paper>();
+    private ArrayList<Paper> relations = new ArrayList<>();
 
     public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count) {
         this.title = title;
@@ -41,16 +40,8 @@ public class Paper {
         } else {
             this.cited_count = -1;
         }
-        if (relation_url != null) {
-            this.relation_url = relation_url;
-        } else {
-            this.relation_url = null;
-        }
-        if (cited_url != null) {
-            this.cited_url = cited_url;
-        } else {
-            this.cited_url = null;
-        }
+        this.relation_url = relation_url;
+        this.cited_url = cited_url;
         if (cited_url != null) {
             this.pdf_url = pdf_url;
         } else {

@@ -21,10 +21,10 @@ import static java.lang.Math.random;
 
 
 public class GoogleAPI {
-    private ExecutorService threadPool; // 5 个线程
+    private final ExecutorService threadPool; // 5 个线程
     private String proxy_host = "";
     private int proxy_port = 0;
-    private String[] root_urls = {
+    private  String[] root_urls = {
             "https://scholar.lanfanshu.cn/scholar",
             "https://scholar.google.com/scholar" // 示例额外镜像
     };
@@ -36,7 +36,7 @@ public class GoogleAPI {
         threadPool = Executors.newFixedThreadPool(4);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         GoogleAPI api = new GoogleAPI();
         api.setNow_url(0);
         var list = api.GetRelation("https://scholar.lanfanshu.cn/scholar?q=related:QrO2S2mGYh8J:scholar.lanfanshu.cn/&scioq=llm+math&hl=zh-CN&as_sdt=0,5");
@@ -116,6 +116,7 @@ public class GoogleAPI {
                 Thread.sleep(1000);
             }
         }
+        assert response != null;
         if (response.statusCode() != 200) {
             System.out.println(response.statusCode() + " " + response.statusMessage());
             throw new IOException("请求失败:" + response.statusCode());
@@ -123,7 +124,7 @@ public class GoogleAPI {
         return response;
     }
 
-    public List<Paper> GetByName(String name, int max_items) throws IOException {
+    public List<Paper> GetByName(String name, int max_items){
         ArrayList<Paper> papers = new ArrayList<>();
         int max_size = max_items;
         try {
@@ -141,7 +142,7 @@ public class GoogleAPI {
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).collect(Collectors.toList()));
+                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).toList());
                 }
             }
         } catch (IOException | InterruptedException e) {
@@ -174,7 +175,7 @@ public class GoogleAPI {
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).collect(Collectors.toList()));
+                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).toList());
                 }
 
             }
