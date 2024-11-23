@@ -1,8 +1,10 @@
 package qba;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Paper{
     private final String title;
@@ -16,11 +18,11 @@ public class Paper{
         this.title = title;
         String[] info_list = info.split(",");
         this.authorInfo = info_list[0];
-        String regex = "\\b\\d{4} -\\b";
+        String regex = "\\d{4} -";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(info);
         if (matcher.find()) {
-            this.year = Integer.parseInt(matcher.group());
+            this.year = Integer.parseInt(matcher.group().substring(0,4));
         }
         else {
             this.year = -1;

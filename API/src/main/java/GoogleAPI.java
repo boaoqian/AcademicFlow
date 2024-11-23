@@ -7,7 +7,12 @@ import qba.Paper;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static java.lang.Math.max;
+
 
 public class GoogleAPI {
     private String proxy_host = "";
@@ -36,7 +41,7 @@ public class GoogleAPI {
         return proxy_host + ":" + proxy_port;
     }
 
-    public String ConstructURL(String url, String title, String lang, int start) {
+    public String constructURL(String url, String title, String lang, int start) {
 
         String result;
         if (start==0){
@@ -48,31 +53,50 @@ public class GoogleAPI {
         return result;
     }
 
-    public String ConstructURL(String url, String title, String lang) {
-        return ConstructURL(url,title,lang,0);
+    public String constructURL(String url, String title, String lang) {
+        return constructURL(url,title,lang,0);
     }
 
-    public String ConstructURL(String url, String title) {
-        return ConstructURL(url,title,"zh-CN",0);
+    public String constructURL(String title) {
+        return constructURL(this.now_url,title,"zh-CN",0);
+    }
+    public String constructURL(String url, int start) {
+        return  url+"&start="+start;
+    }
+
+    public Connection.Response get(String url) throws IOException {
+        Connection connection = Jsoup.connect(url);
+        // 判断是否需要使用代理
+        if (this.proxy_port > 0) {
+            connection = connection.proxy(this.proxy_host, this.proxy_port);
+        }
+        // 执行请求并获取响应
+        Connection.Response response = connection.execute();
+        // 检查响应码
+        if (response.statusCode() != 200) {
+            throw new IOException("HTTP请求失败，状态码：" + response.statusCode());
+        }
+        return response;
     }
 
     public ArrayList<Paper> GetByName(String name,int max_items) throws IOException {
-        ArrayList<Paper> papers = null;
+        ArrayList<Paper> papers = new ArrayList<>();
+        int max_size = max_items;
         try {
-            String url = ConstructURL(now_url,name);
+            String url = constructURL(name);
             Document doc;
-            Connection connection = Jsoup.connect(url);
-            // 判断是否需要使用代理
-            if (this.proxy_port > 0) {
-                connection = connection.proxy(this.proxy_host, this.proxy_port);
+            Connection.Response response = get(url);
+            doc = response.parse();
+            max_size = max(max_size,ParseSize(doc));
+            papers.addAll(ParsePaper(doc));
+            if (max_size>10&&max_items>10){
+                for(int i = 10;i<max_items;i+=10){
+                    url = constructURL(url,i);
+                    response = get(url);
+                    doc = response.parse();
+                    papers.addAll(ParsePaper(doc));
+                }
             }
-            // 执行请求并获取响应
-            Connection.Response response = connection.execute();
-            // 检查响应码
-            if (response.statusCode() != 200) {
-                throw new IOException("HTTP请求失败，状态码：" + response.statusCode());
-            }
-            papers = ParsePaper(response.parse());
         } catch (IOException e) {
             System.out.println("从url: " + now_url + "\n获取信息失败");
             e.printStackTrace();
@@ -82,6 +106,18 @@ public class GoogleAPI {
 
     public ArrayList<Paper> GetByName(String name) throws IOException {
         return GetByName(name,10);
+    }
+
+    public int ParseSize(Document doc){
+        String info = doc.selectXpath("/html/body/div/div[7]/div[3]/div").text();
+        int size = -1;
+        String regex = "\\d+";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(info);
+        if (matcher.find()) {
+           size  = Integer.parseInt(matcher.group());
+        }
+        return size;
     }
 
     public ArrayList<Paper> ParsePaper(Document doc) {
@@ -109,7 +145,6 @@ public class GoogleAPI {
     public static void main(String[] args) throws IOException {
         GoogleAPI api = new GoogleAPI();
         api.setNow_url(0);
-        ArrayList<Paper> papers = api.GetByName("attention is all you need",10);
-        System.out.println(papers.stream().map(Paper::toString).collect(Collectors.joining()));
+        System.out.println(api.GetByName("llm math",30));
     }
 }
