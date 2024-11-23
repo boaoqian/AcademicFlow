@@ -40,7 +40,7 @@ public class GoogleAPI {
         GoogleAPI api = new GoogleAPI();
         api.setNow_url(0);
         var list = api.GetRelation("https://scholar.lanfanshu.cn/scholar?q=related:QrO2S2mGYh8J:scholar.lanfanshu.cn/&scioq=llm+math&hl=zh-CN&as_sdt=0,5");
-        System.out.println(list.stream().map(Paper::toString).collect(Collectors.joining()));
+        list = Paper.filter(list.stream(), 0.5F);
         System.out.println(list.size());
         api.shutdown();
     }
@@ -123,7 +123,7 @@ public class GoogleAPI {
         return response;
     }
 
-    public ArrayList<Paper> GetByName(String name, int max_items) throws IOException {
+    public List<Paper> GetByName(String name, int max_items) throws IOException {
         ArrayList<Paper> papers = new ArrayList<>();
         int max_size = max_items;
         try {
@@ -153,11 +153,11 @@ public class GoogleAPI {
         return papers;
     }
 
-    public ArrayList<Paper> GetByName(String name) throws IOException {
+    public List<Paper> GetByName(String name) throws IOException {
         return GetByName(name, 10);
     }
 
-    public ArrayList<Paper> GetRelation(String url, int max_items) {
+    public List<Paper> GetRelation(String url, int max_items) {
         ArrayList<Paper> papers = new ArrayList<>();
         int max_size = max_items;
         try {
@@ -187,7 +187,7 @@ public class GoogleAPI {
         return papers;
     }
 
-    public ArrayList<Paper> GetRelation(String url) {
+    public List<Paper> GetRelation(String url) {
         return GetRelation(url, Integer.MAX_VALUE);
     }
 
@@ -203,7 +203,7 @@ public class GoogleAPI {
         return size;
     }
 
-    public ArrayList<Paper> ParsePaper(Document doc) {
+    public List<Paper> ParsePaper(Document doc) {
         //提取页面的paper信息,返回信息列表
         ArrayList<Paper> papers = new ArrayList<>();
         Elements result = doc.getElementsByClass("gs_r gs_or gs_scl");
