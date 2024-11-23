@@ -1,5 +1,6 @@
 package qba;
 
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -7,10 +8,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 
 public class Paper {
+    /*a class store paper info and some func to prosses paper info*/
     private final String title;
     private final String authorInfo;
     private final String relation_url;
@@ -64,7 +65,8 @@ public class Paper {
     public String getTitle() {
         return title;
     }
-    public int getCited_count(){
+
+    public int getCited_count() {
         return cited_count;
     }
 
@@ -72,11 +74,8 @@ public class Paper {
         return authorInfo;
     }
 
-    public String getYear() {
-        if (year == -1) {
-            return "unknow";
-        }
-        return String.valueOf(year);
+    public int getYear() {
+        return year;
     }
 
     public String getPdf_url() {
@@ -128,21 +127,62 @@ public class Paper {
         info += "*".repeat(20) + "\n";
         return info;
     }
-    public static List<Paper> filter(Stream<Paper> stream, float threshold) {
-        threshold = max(min(threshold,1),0);
-        List<Paper> sorted_paper = stream.filter(Paper::isComplated).sorted(Comparator.comparing(Paper::getCited_count).reversed()).toList();
-        return sorted_paper.subList(0, Math.round(((float) sorted_paper.size())*threshold));
-    }
-    public static List<Paper> filter(Stream<Paper> stream, int threshold) {
-        List<Paper> sorted_paper = stream.filter(Paper::isComplated).sorted(Comparator.comparing(Paper::getCited_count).reversed()).toList();
-        threshold = max(min(threshold,sorted_paper.size()),0);
-        return sorted_paper.subList(0, threshold);
-    }
-    public static List<Paper> filter(Stream<Paper> stream,PaperFilter filter) {
-        return stream.filter(filter::accept).toList();
+
+    public static Stream<Paper> filter(List<Paper> papers, PaperFilter Filter) {
+        return Filter.filter(papers);
     }
 
     public interface PaperFilter {
-        boolean accept(Paper paper);
+        Stream<Paper> filter(List<Paper> papers);
+    }
+
+    public static class CitedCountFilter implements PaperFilter {
+        float threshold = -1;
+        int limit = -1;
+
+        public CitedCountFilter(float threshold) {
+            this.threshold = max(min(threshold, 1), 0);
+        }
+
+        public CitedCountFilter(int limit) {
+            this.limit = limit;
+        }
+
+        @Override
+        public Stream<Paper> filter(List<Paper> papers) {
+            if (threshold < 0) {
+                limit = max(min(limit, papers.size()), 0);
+            } else limit = (int) ceil(papers.size() * threshold);
+            return papers.stream().filter(Paper::isComplated).sorted(Comparator.comparing(Paper::getCited_count).reversed()).limit(limit);
+        }
+    }
+
+    public static class YearFilter implements PaperFilter {
+        int newest = Year.now().getValue() + 1;
+        int oldest = newest - 6;
+
+        YearFilter(int span) {
+            if (newest - span < 1900) {
+                throw new IllegalArgumentException("Year limit must be greater than or equal to 1900");
+            } else this.oldest = newest - span;
+        }
+
+        YearFilter(int newest, int oldest) {
+            if (newest < oldest) {
+                throw new IllegalArgumentException("newest order than ordest");
+            }
+            this.newest = newest;
+            this.oldest = oldest;
+        }
+
+        YearFilter() {
+            //default newest = now year + 1
+            //default ordest = now year - 5
+        }
+
+        @Override
+        public Stream<Paper> filter(List<Paper> papers) {
+            return papers.stream().filter(Paper::isComplated).filter(p -> p.getYear() <= newest && p.getYear() >= oldest);
+        }
     }
 }

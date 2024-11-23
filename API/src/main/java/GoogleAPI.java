@@ -14,7 +14,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static java.lang.Math.min;
 import static java.lang.Math.random;
@@ -24,14 +23,16 @@ public class GoogleAPI {
     private final ExecutorService threadPool; // 5 个线程
     private String proxy_host = "";
     private int proxy_port = 0;
-    private  String[] root_urls = {
+    private String[] root_urls = {
             "https://scholar.lanfanshu.cn/scholar",
             "https://scholar.google.com/scholar" // 示例额外镜像
     };
     private String now_url = root_urls[0];
+
     GoogleAPI(int numThreads) {
         threadPool = Executors.newFixedThreadPool(numThreads);
     }
+
     GoogleAPI() {
         threadPool = Executors.newFixedThreadPool(4);
     }
@@ -40,12 +41,16 @@ public class GoogleAPI {
         GoogleAPI api = new GoogleAPI();
         api.setNow_url(0);
         var list = api.GetRelation("https://scholar.lanfanshu.cn/scholar?q=related:QrO2S2mGYh8J:scholar.lanfanshu.cn/&scioq=llm+math&hl=zh-CN&as_sdt=0,5");
-        list = Paper.filter(list.stream(), 0.5F);
+        var list1 = Paper.filter(list, new Paper.CitedCountFilter(0.5F));
+        var list2 = Paper.filter(list, new Paper.CitedCountFilter(1000));
         System.out.println(list.size());
+        System.out.println(list1.count());
+        System.out.println(list2.count());
+
         api.shutdown();
     }
 
-    public void shutdown(){
+    public void shutdown() {
         threadPool.shutdown();
     }
 
@@ -124,7 +129,7 @@ public class GoogleAPI {
         return response;
     }
 
-    public List<Paper> GetByName(String name, int max_items){
+    public List<Paper> GetByName(String name, int max_items) {
         ArrayList<Paper> papers = new ArrayList<>();
         int max_size = max_items;
         try {
@@ -221,7 +226,7 @@ public class GoogleAPI {
             if (!cited_url.isEmpty()) {
                 cited_url = now_url.substring(0, now_url.indexOf("/", 9)) + cited_url;
             }
-            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url,cited_count));
+            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url, cited_count));
         }
         return papers;
     }
