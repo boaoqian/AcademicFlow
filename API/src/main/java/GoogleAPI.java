@@ -197,6 +197,13 @@ public class GoogleAPI {
         return GetRelation(url, Integer.MAX_VALUE);
     }
 
+    public List<Paper> GetCited(String url, int max_items) {
+        return GetRelation(url,max_items);
+    }
+    public List<Paper> GetCited(String url) {
+        return GetCited(url, Integer.MAX_VALUE);
+    }
+
     public int ParseSize(Document doc) {
         String info = doc.selectXpath("/html/body/div/div[7]/div[3]/div").text();
         int size = -1;
@@ -220,13 +227,14 @@ public class GoogleAPI {
             String relation_url = element.selectXpath("div[2]/div[3]/a[4]").attr("href");
             String pdf_url = element.selectXpath("div[1]/div/div/a").attr("href");
             String cited_count = element.selectXpath("div[2]/div[3]/a[3]").text();
+            String abstract_text = element.selectXpath("/div[2]/div[2]").text();
             if (!relation_url.isEmpty()) {
                 relation_url = now_url.substring(0, now_url.indexOf("/", 9)) + relation_url;
             }
             if (!cited_url.isEmpty()) {
                 cited_url = now_url.substring(0, now_url.indexOf("/", 9)) + cited_url;
             }
-            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url, cited_count));
+            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url, cited_count,abstract_text));
         }
         return papers;
     }

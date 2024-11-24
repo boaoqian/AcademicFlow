@@ -4,6 +4,7 @@ import java.time.Year;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -19,10 +20,12 @@ public class Paper {
     private final int cited_count;
     private final String pdf_url;
     private final int year;
+    private final String abstract_text;
     private ArrayList<Paper> relations = new ArrayList<>();
 
-    public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count) {
+    public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count,String abstract_text) {
         this.title = title;
+        this.abstract_text = abstract_text;
         String[] info_list = info.split(",");
         this.authorInfo = info_list[0];
         String regex = "\\d{4} -";
@@ -62,6 +65,10 @@ public class Paper {
         this.relations = relations;
     }
 
+    public String getAbstract() {
+        return abstract_text;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -80,6 +87,10 @@ public class Paper {
 
     public String getPdf_url() {
         return pdf_url;
+    }
+
+    public int get_uid(){
+        return Objects.hash(title)*31+Objects.hash(pdf_url);
     }
 
     public boolean isComplated() {
