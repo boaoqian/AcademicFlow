@@ -1,12 +1,10 @@
-package qba;
-
 import java.time.Year;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.Math.*;
@@ -14,14 +12,15 @@ import static java.lang.Math.*;
 public class Paper {
     /*a class store paper info and some func to prosses paper info*/
     private final String title;
-    private final String authorInfo;
-    private final String relation_url;
-    private final String cited_url;
-    private final int cited_count;
-    private final String pdf_url;
-    private final int year;
-    private final String abstract_text;
-    private ArrayList<Paper> relations = new ArrayList<>();
+    private String authorInfo = "";
+    private String relation_url = "";
+    private String cited_url = "";
+    private int cited_count = 0;
+    private String pdf_url = "";
+    private int year = -1;
+    private String abstract_text = "";
+    private String cited_uid = "";
+    private String relation_uid = "";
 
     public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count,String abstract_text) {
         this.title = title;
@@ -38,10 +37,13 @@ public class Paper {
         }
         regex = "\\d+";
         pattern = Pattern.compile(regex);
-        matcher = pattern.matcher(cited_count);
-        if (matcher.find()) {
-            this.cited_count = Integer.parseInt(matcher.group());
-        } else {
+        if (!(cited_count ==null) && cited_count.isEmpty()){
+            matcher = pattern.matcher(cited_count);
+            if (matcher.find()) {
+                this.cited_count = Integer.parseInt(matcher.group());
+            }
+        }
+        else {
             this.cited_count = -1;
         }
         this.relation_url = relation_url;
@@ -53,18 +55,27 @@ public class Paper {
         }
     }
 
-    public void addRelation(Paper relation) {
-        relations.add(relation);
+    public String getRelation_uid() {
+        if(relation_uid.isEmpty()){
+            return null;
+        }
+        return relation_uid;
     }
-
-    public ArrayList<Paper> getRelations() {
-        return relations;
+    public void setRelation_uid(List<Paper> relation_uid) {
+        this.relation_uid = relation_uid.stream().map(Paper::get_uid).map(Object::toString).collect(Collectors.joining(","));
     }
-
-    public void setRelations(ArrayList<Paper> relations) {
-        this.relations = relations;
+    public String getCited_uid(){
+        if (cited_uid.isEmpty()) {
+            return null;
+        }
+        return cited_uid;
     }
-
+    public void setCited_uid(String cited){
+        this.cited_uid = cited;
+    }
+    public void setCited_uid(List<Paper> cited){
+        this.cited_uid = cited.stream().map(Paper::get_uid).map(Object::toString).collect(Collectors.joining(","));
+    }
     public String getAbstract() {
         return abstract_text;
     }
@@ -115,6 +126,9 @@ public class Paper {
     public String getRelation_url() {
         return relation_url;
     }
+    public String getCited_url() {
+        return cited_url;
+    }
 
     public String toString() {
         var info = "\n";
@@ -123,17 +137,8 @@ public class Paper {
         if (year > 0) {
             info += "Year: " + year + "\n";
         }
-        if (relation_url.length() > 9) {
-            info += "Relation: " + relation_url + "\n";
-        }
-        if (cited_url.length() > 9) {
-            info += "Cited: " + cited_url + "\n";
-        }
-        if (cited_count > 0) {
-            info += "Cited: " + cited_count + "\n";
-        }
-        if (pdf_url.length() > 9) {
-            info += "PDF: " + pdf_url + "\n";
+        if (abstract_text.length()>10){
+            info += "Abstract: " + abstract_text + "\n";
         }
         info += "*".repeat(20) + "\n";
         return info;

@@ -3,7 +3,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import qba.Paper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,8 +14,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.lang.Math.min;
-import static java.lang.Math.random;
+import static java.lang.Math.*;
 
 
 public class GoogleAPI {
@@ -54,6 +52,10 @@ public class GoogleAPI {
         threadPool.shutdown();
     }
 
+    public void close(){
+        threadPool.shutdown();
+    }
+
     public String getNow_url() {
         return now_url;
     }
@@ -76,7 +78,7 @@ public class GoogleAPI {
     }
 
     public String constructURL(String url, String title, String lang, int start) {
-
+        url = url.replace(" ","+");
         String result;
         if (start == 0) {
             result = "%s?hl=%s&q=%s".formatted(url, lang, title.replace(" ", "+"));
@@ -131,23 +133,26 @@ public class GoogleAPI {
 
     public List<Paper> GetByName(String name, int max_items) {
         ArrayList<Paper> papers = new ArrayList<>();
+        if (name.length()<=2){
+            return papers;
+        }
         int max_size = max_items;
         try {
             String url = constructURL(name);
             Document doc;
             Connection.Response response = get(url);
             doc = response.parse();
-            max_size = min(max_size, ParseSize(doc));
+            max_size = max(min(max_size, ParseSize(doc)),0);
             papers.addAll(ParsePaper(doc));
             if (max_size > 10) {
                 List<Future<Connection.Response>> futures = new ArrayList<>();
-                for (int i = 10; i < max_size; i += 10) {
+                for (int i = 10; i <= max_size; i += 10) {
                     String qurl = constructURL(url, i);
                     futures.add(threadPool.submit(() -> get(qurl)));
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).toList());
+                    papers.addAll(ParsePaper(doc));
                 }
             }
         } catch (IOException | InterruptedException e) {
@@ -165,6 +170,9 @@ public class GoogleAPI {
 
     public List<Paper> GetRelation(String url, int max_items) {
         ArrayList<Paper> papers = new ArrayList<>();
+        if (url.length()<9){
+            return papers;
+        }
         int max_size = max_items;
         try {
             Document doc;
@@ -174,13 +182,13 @@ public class GoogleAPI {
             papers.addAll(ParsePaper(doc));
             if (max_size > 10) {
                 List<Future<Connection.Response>> futures = new ArrayList<>();
-                for (int i = 10; i < max_size; i += 10) {
+                for (int i = 10; i <= max_size; i += 10) {
                     String qurl = constructURL(url, i);
                     futures.add(threadPool.submit(() -> get(qurl)));
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc).stream().filter(Paper::isComplated).toList());
+                    papers.addAll(ParsePaper(doc));
                 }
 
             }
@@ -219,7 +227,10 @@ public class GoogleAPI {
     public List<Paper> ParsePaper(Document doc) {
         //提取页面的paper信息,返回信息列表
         ArrayList<Paper> papers = new ArrayList<>();
-        Elements result = doc.getElementsByClass("gs_r gs_or gs_scl");
+        Elements result = doc.selectXpath("//*[@id=\"gs_res_ccl_mid\"]").first().children();
+        if (result.isEmpty()) {
+            result = doc.getElementsByClass("gs_r gs_or gs_scl");//gs_r gs_or gs_scl gs_fmar
+        }
         for (Element element : result) {
             String title = element.getElementsByClass("gs_rt").getFirst().getElementsByTag("a").text();
             String author = element.getElementsByClass("gs_a").text();

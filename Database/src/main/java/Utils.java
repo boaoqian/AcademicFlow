@@ -50,7 +50,7 @@ public class Utils {
                 pstmt.setString(7, relation_uid); // relation_uid
                 pstmt.setString(8, pdf); // pdf
                 pstmt.setString(9, relation_url); // relation_url
-                pstmt.setString(10, cited_uid); // cited_url
+                pstmt.setString(10, cited_url); // cited_url
                 // 执行插入操作
                 pstmt.executeUpdate();
                 System.out.println("数据插入成功！");
@@ -60,5 +60,15 @@ public class Utils {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+    public static void Insert(Paper paper) throws SQLException {
+        Insert(paper.get_uid(),paper.getTitle(),paper.getYear(),paper.getAuthor(),
+                paper.getAbstract(), paper.getCited_url(), paper.getRelation_url(),
+                paper.getCited_uid(),paper.getRelation_uid(),paper.getPdf_url());
+    }
+    public static void main(String[] args) throws SQLException {
+        Paper a = new Paper("deferrtb","dfrt,vret,12321 -",null,null,null,null,null);
+        System.out.println(a.getCited_uid().getClass());
+        Utils.Insert(a);
     }
 }
