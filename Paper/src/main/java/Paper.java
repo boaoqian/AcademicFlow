@@ -22,7 +22,7 @@ public class Paper {
     private String cited_uid = "";
     private String relation_uid = "";
 
-    public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count,String abstract_text) {
+    public Paper(String title, String info, String relation_url, String cited_url, String pdf_url, String cited_count, String abstract_text) {
         this.title = title;
         this.abstract_text = abstract_text;
         String[] info_list = info.split(",");
@@ -37,11 +37,9 @@ public class Paper {
         }
         regex = "\\d+";
         pattern = Pattern.compile(regex);
-        if (!(cited_count ==null) && cited_count.isEmpty()){
-            matcher = pattern.matcher(cited_count);
-            if (matcher.find()) {
-                this.cited_count = Integer.parseInt(matcher.group());
-            }
+        matcher = pattern.matcher(cited_count);
+        if (matcher.find()) {
+            this.cited_count = Integer.parseInt(matcher.group());
         }
         else {
             this.cited_count = -1;
@@ -55,8 +53,26 @@ public class Paper {
         }
     }
 
+    Paper(String title, int year, String authorInfo, String relation_url, String cited_url,
+          String pdf_url, int cited_count, String abstract_text, String cited_uid, String relation_uid) {
+        this.title = title;
+        this.year = year;
+        this.authorInfo = authorInfo;
+        this.relation_url = relation_url;
+        this.cited_url = cited_url;
+        this.pdf_url = pdf_url;
+        this.cited_count = cited_count;
+        this.abstract_text = abstract_text;
+        this.relation_uid = relation_uid;
+        this.cited_uid = cited_uid;
+    }
+
+    public int hashCode() {
+        return get_uid();  // 使用 Objects.hash 来计算哈希值
+    }
+
     public String getRelation_uid() {
-        if(relation_uid.isEmpty()){
+        if(relation_uid==null||relation_uid.isEmpty()){
             return null;
         }
         return relation_uid;
@@ -65,13 +81,19 @@ public class Paper {
         this.relation_uid = relation_uid.stream().map(Paper::get_uid).map(Object::toString).collect(Collectors.joining(","));
     }
     public String getCited_uid(){
-        if (cited_uid.isEmpty()) {
+        if (cited_uid==null||cited_uid.isEmpty()) {
             return null;
         }
         return cited_uid;
     }
     public void setCited_uid(String cited){
         this.cited_uid = cited;
+    }
+    public void add_cited_uid(int cited){
+        if(cited_uid.isEmpty()){
+            cited_uid = ""+cited;
+        }
+        else this.cited_uid += ","+cited;
     }
     public void setCited_uid(List<Paper> cited){
         this.cited_uid = cited.stream().map(Paper::get_uid).map(Object::toString).collect(Collectors.joining(","));
@@ -170,6 +192,12 @@ public class Paper {
                 limit = max(min(limit, papers.size()), 0);
             } else limit = (int) ceil(papers.size() * threshold);
             return papers.stream().filter(Paper::isComplated).sorted(Comparator.comparing(Paper::getCited_count).reversed()).limit(limit);
+        }
+    }
+    public static class CitedFilter implements PaperFilter {
+        @Override
+        public Stream<Paper> filter(List<Paper> papers) {
+            return papers.stream().filter(paper -> paper.getCited_count() > 0);
         }
     }
 

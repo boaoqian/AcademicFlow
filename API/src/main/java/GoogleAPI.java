@@ -5,14 +5,14 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.*;
 
@@ -32,7 +32,7 @@ public class GoogleAPI {
     }
 
     GoogleAPI() {
-        threadPool = Executors.newFixedThreadPool(4);
+        threadPool = Executors.newFixedThreadPool(8);
     }
 
     public static void main(String[] args) {
@@ -52,7 +52,7 @@ public class GoogleAPI {
         threadPool.shutdown();
     }
 
-    public void close(){
+    public void close() {
         threadPool.shutdown();
     }
 
@@ -78,10 +78,10 @@ public class GoogleAPI {
     }
 
     public String constructURL(String url, String title, String lang, int start) {
-        url = url.replace(" ","+");
+        url = url.replace(" ", "+");
         String result;
         if (start == 0) {
-            result = "%s?hl=%s&q=%s".formatted(url, lang, title.replace(" ", "+"));
+            result = "%s?lookup=0&hl=%s&q=%s".formatted(url, lang, title.replace(" ", "+"));
         } else {
             result = "%s?start=%d&hl=%s&q=%s".formatted(url, start, lang, title.replace(" ", "+"));
         }
@@ -117,23 +117,75 @@ public class GoogleAPI {
                 Thread.sleep(1000);
                 continue;
             }
+            if (response == null) {
+                Thread.sleep(1000);
+                continue;
+            }
             if (response.statusCode() == 200) {
                 break;
             } else {
                 Thread.sleep(1000);
             }
         }
-        assert response != null;
-        if (response.statusCode() != 200) {
+        if (response==null || response.statusCode() != 200) {
             System.out.println(response.statusCode() + " " + response.statusMessage());
             throw new IOException("请求失败:" + response.statusCode());
         }
         return response;
     }
 
-    public List<Paper> GetByName(String name, int max_items) {
+    public ArrayList<Paper> getPapers(String url) throws IOException, InterruptedException {
+        Connection.Response response = get(url);
+        Document document = response.parse();
+        ArrayList<Paper> papers = ParsePapers(document);
+        return papers;
+    }
+
+    public ArrayList<Future<ArrayList<Paper>>> GetFutureFromCited(String url, int max_items){
         ArrayList<Paper> papers = new ArrayList<>();
-        if (name.length()<=2){
+        ArrayList<Future<ArrayList<Paper>>> futures = new ArrayList<>();
+        if (url.length() <= 2) {
+            return futures;
+        }
+        int max_size = max_items;
+        try {
+            Document doc;
+            Connection.Response response = get(url);
+            doc = response.parse();
+            max_size = max(min(max_size, ParseSize(doc)), 0);
+            futures.add(threadPool.submit(() -> ParsePapers(doc)));
+            if (max_size > 10) {
+                for (int i = 10; i <= max_size; i += 10) {
+                    String qurl = constructURL(url, i);
+                    futures.add(threadPool.submit(() -> getPapers(qurl)));
+                }
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return futures;
+    }
+
+    public ArrayList<Paper> FuturestoPapers(List<Future<Connection.Response>> futures) throws ExecutionException {
+        ArrayList<Paper> papers = new ArrayList<>();
+        try {
+            for (Future<Connection.Response> future : futures) {
+                Document doc = future.get().parse();
+                papers.addAll(ParsePapers(doc));
+            }
+        }catch (IOException | InterruptedException e) {
+            System.out.println("从url: " + now_url + "\n获取信息失败");
+            e.printStackTrace();
+        }
+        return papers;
+    }
+
+    public ArrayList<Paper> GetByName(String name, int max_items) {
+        ArrayList<Paper> papers = new ArrayList<>();
+        List<Future<Connection.Response>> futures = new ArrayList<>();
+        if (name.length() <= 2) {
             return papers;
         }
         int max_size = max_items;
@@ -142,17 +194,16 @@ public class GoogleAPI {
             Document doc;
             Connection.Response response = get(url);
             doc = response.parse();
-            max_size = max(min(max_size, ParseSize(doc)),0);
-            papers.addAll(ParsePaper(doc));
+            max_size = max(min(max_size, ParseSize(doc)), 0);
+            papers.addAll(ParsePapers(doc));
             if (max_size > 10) {
-                List<Future<Connection.Response>> futures = new ArrayList<>();
                 for (int i = 10; i <= max_size; i += 10) {
                     String qurl = constructURL(url, i);
                     futures.add(threadPool.submit(() -> get(qurl)));
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc));
+                    papers.addAll(ParsePapers(doc));
                 }
             }
         } catch (IOException | InterruptedException e) {
@@ -164,13 +215,13 @@ public class GoogleAPI {
         return papers;
     }
 
-    public List<Paper> GetByName(String name) throws IOException {
+    public ArrayList<Paper> GetByName(String name) throws IOException {
         return GetByName(name, 10);
     }
 
-    public List<Paper> GetRelation(String url, int max_items) {
+    public ArrayList<Paper> GetRelation(String url, int max_items) {
         ArrayList<Paper> papers = new ArrayList<>();
-        if (url.length()<9){
+        if (url.length() < 9) {
             return papers;
         }
         int max_size = max_items;
@@ -179,7 +230,7 @@ public class GoogleAPI {
             Connection.Response response = get(url);
             doc = response.parse();
             max_size = min(max_size, ParseSize(doc));
-            papers.addAll(ParsePaper(doc));
+            papers.addAll(ParsePapers(doc));
             if (max_size > 10) {
                 List<Future<Connection.Response>> futures = new ArrayList<>();
                 for (int i = 10; i <= max_size; i += 10) {
@@ -188,7 +239,7 @@ public class GoogleAPI {
                 }
                 for (Future<Connection.Response> future : futures) {
                     doc = future.get().parse();
-                    papers.addAll(ParsePaper(doc));
+                    papers.addAll(ParsePapers(doc));
                 }
 
             }
@@ -201,15 +252,73 @@ public class GoogleAPI {
         return papers;
     }
 
-    public List<Paper> GetRelation(String url) {
+    public ArrayList<Paper> GetRelation(String url) {
         return GetRelation(url, Integer.MAX_VALUE);
     }
 
-    public List<Paper> GetCited(String url, int max_items) {
-        return GetRelation(url,max_items);
+    public ArrayList<Paper> GetCited(String url, int max_items) {
+        return GetRelation(url, max_items);
     }
-    public List<Paper> GetCited(String url) {
+
+    public ArrayList<Paper> GetCited(String url) {
         return GetCited(url, Integer.MAX_VALUE);
+    }
+
+    public List<Paper> GetCitedGraph(Paper paper,int depth) throws ExecutionException, InterruptedException {
+        Queue<Paper> search_paper_queue = new LinkedList<>();
+        Queue<Paper> wait_paper_queue = new LinkedList<>();
+        Queue<Integer> search_depth = new LinkedList<Integer>();
+        ArrayList<ArrayList<Future<ArrayList<Paper>>>> results = new ArrayList<>();
+        Set<Integer> visited = new HashSet<>();
+        Map<Integer, Paper> paperMap = new HashMap<>();
+        search_paper_queue.add(paper);
+        search_depth.add(0);
+        while (true) {
+            if (search_paper_queue.isEmpty()) {
+                if (!search_depth.isEmpty()){
+                    for (var futures : results) {
+                        int d = search_depth.poll();
+                        Paper p = wait_paper_queue.poll();
+                        List<Paper> temp = new ArrayList<>();
+                        for (var future : futures) {
+                            temp.addAll(future.get());
+                        }
+                        p.setCited_uid(temp.stream().map(Paper::get_uid).map(String::valueOf).collect(Collectors.joining(",")));
+                        paperMap.put(p.get_uid(), p);
+                        temp.stream().filter(pp->!visited.contains(pp.get_uid())).forEach(pp -> paperMap.put(pp.get_uid(), pp));
+                        temp = Paper.filter(temp, new Paper.CitedFilter()).toList();
+                        visited.add(p.get_uid());
+                        temp.stream().forEach(pp->{
+//                            System.out.println(d);
+                            search_depth.offer(d);
+                            search_paper_queue.offer(pp);
+                        });
+                    }
+                    results.clear();
+                }
+                else {
+                    break;
+                }
+            }
+            Paper p = search_paper_queue.poll();
+            wait_paper_queue.add(p);
+            int d = search_depth.poll();
+//            System.out.println("Search:"+p.getTitle());
+//            System.out.println("depth:"+d);
+            if (d > depth) {
+                break;
+            }
+            if (visited.contains(p.get_uid())) {
+                continue;
+            }
+            results.add(GetFutureFromCited(p.getCited_url(),Integer.MAX_VALUE));
+            search_depth.add(d+1);
+        }
+        return new ArrayList<>(paperMap.values());
+    }
+
+    public List<Paper> GetCitedGraph(Paper paper) throws ExecutionException, InterruptedException {
+        return GetCitedGraph(paper, 1);
     }
 
     public int ParseSize(Document doc) {
@@ -224,28 +333,39 @@ public class GoogleAPI {
         return size;
     }
 
-    public List<Paper> ParsePaper(Document doc) {
+    public ArrayList<Paper> ParsePapers(Document doc) {
         //提取页面的paper信息,返回信息列表
         ArrayList<Paper> papers = new ArrayList<>();
-        Elements result = doc.selectXpath("//*[@id=\"gs_res_ccl_mid\"]").first().children();
-        if (result.isEmpty()) {
-            result = doc.getElementsByClass("gs_r gs_or gs_scl");//gs_r gs_or gs_scl gs_fmar
-        }
+        Elements result = doc.getElementsByClass("gs_r gs_or gs_scl");//gs_r gs_or gs_scl gs_fmar
         for (Element element : result) {
             String title = element.getElementsByClass("gs_rt").getFirst().getElementsByTag("a").text();
+            if (title.isEmpty()) {
+                continue;
+            }
             String author = element.getElementsByClass("gs_a").text();
-            String cited_url = element.selectXpath("div[2]/div[3]/a[3]").attr("href");
-            String relation_url = element.selectXpath("div[2]/div[3]/a[4]").attr("href");
             String pdf_url = element.selectXpath("div[1]/div/div/a").attr("href");
-            String cited_count = element.selectXpath("div[2]/div[3]/a[3]").text();
-            String abstract_text = element.selectXpath("/div[2]/div[2]").text();
+            String abstract_text = element.getElementsByClass("gs_rs").text();
+            String cited_url = "";
+            String cited_count = "0";
+            String relation_url = "";
+            Elements info = element.getElementsByClass("gs_fl gs_flb").first().getElementsByTag("a");
+            for (Element a : info) {
+                if (a.attr("href").contains("cites")) {
+                    cited_url = a.attr("href");
+                    cited_count = a.text();
+                }
+                if (a.attr("href").contains("related")) {
+                    relation_url = a.attr("href");
+                }
+
+            }
             if (!relation_url.isEmpty()) {
                 relation_url = now_url.substring(0, now_url.indexOf("/", 9)) + relation_url;
             }
             if (!cited_url.isEmpty()) {
                 cited_url = now_url.substring(0, now_url.indexOf("/", 9)) + cited_url;
             }
-            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url, cited_count,abstract_text));
+            papers.add(new Paper(title, author, relation_url, cited_url, pdf_url, cited_count, abstract_text));
         }
         return papers;
     }
