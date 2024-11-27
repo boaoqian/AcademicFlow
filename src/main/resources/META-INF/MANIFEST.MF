@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: MainCMD
+Class-Path: sqlite-jdbc-3.47.0.0.jar jsoup-1.18.1.jar
+

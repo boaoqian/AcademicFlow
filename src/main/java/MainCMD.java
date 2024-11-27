@@ -3,8 +3,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class MainCMD {
     List<Paper> papers;
@@ -99,7 +102,7 @@ public class MainCMD {
         }
         papers = api.GetCitedGraph(papers.get(i),1);
     }
-    public void buildGraph(String uid){
+    public void buildGraph(String uid) throws SQLException {
         int i;
         try {
             i = Integer.parseInt(uid);
@@ -108,7 +111,28 @@ public class MainCMD {
             invailed_cmd();
             return;
         }
-
+        Paper p = Utils.getPaper(i);
+        System.out.println(p.getCited_uid());
+        Map<Paper, List<Paper>> graph = Utils.buildGraph(p,2);
+        for (Map.Entry<Paper, List<Paper>> entry : graph.entrySet()) {
+            System.out.println("Paper " + entry.getKey().get_uid() +
+                    " cites: " + entry.getValue().stream().map(Paper::get_uid).map(String::valueOf).collect(Collectors.joining(", ")));
+        }
+    }
+    public void info(String idx)  {
+        int i;
+        try {
+            i = Integer.parseInt(idx);
+        }
+        catch (NumberFormatException e){
+            invailed_cmd();
+            return;
+        }
+        Paper p = papers.get(i);
+        System.out.println(p.toString());
+        System.out.println(p.get_uid());
+        System.out.println(p.getCited_uid());
+        System.out.println(p.getRelation_uid());
     }
     public static void main(String[] args) throws IOException, SQLException, ExecutionException, InterruptedException {
         MainCMD cmd = new MainCMD();
@@ -141,6 +165,8 @@ public class MainCMD {
                 case "sqlclean" -> cmd.SQLclean();
                 case "submits" -> cmd.submits();
                 case "cg" -> cmd.CiteGraph(body);
+                case "bg" -> cmd.buildGraph(body);
+                case "info" -> cmd.info(body);
                 default -> cmd.invailed_cmd();
             }
         }

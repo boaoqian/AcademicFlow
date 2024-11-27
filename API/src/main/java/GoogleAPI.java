@@ -32,9 +32,11 @@ public class GoogleAPI {
     }
 
     GoogleAPI() {
-        threadPool = Executors.newFixedThreadPool(8);
+        threadPool = Executors.newFixedThreadPool(4);
     }
-
+    public static void log(String mas){
+        System.out.println(mas);
+    }
     public static void main(String[] args) {
         GoogleAPI api = new GoogleAPI();
         api.setNow_url(0);
@@ -102,6 +104,8 @@ public class GoogleAPI {
 
     public Connection.Response get(String url) throws IOException, InterruptedException {
         Connection connection = Jsoup.connect(url);
+        int failed_count = 0;
+        final int max_try = 10;
         // 判断是否需要使用代理
         if (this.proxy_port > 0) {
             connection = connection.proxy(this.proxy_host, this.proxy_port);
@@ -110,34 +114,54 @@ public class GoogleAPI {
         Thread.sleep((long) (random() * 1000));
         // 检查响应码
         Connection.Response response = null;
-        for (int i = 0; i < 3; i++) {
+        while (true) {
+            if(failed_count >= max_try) {
+                throw new IOException("请求失败");
+            }
             try {
                 response = connection.execute();
             } catch (Exception e) {
-                Thread.sleep(1000);
+                Thread.sleep((long) (1000+random()*2000*failed_count));
+                failed_count++;
+                log("url failed :"+url+"\nfailed_count:"+failed_count);
                 continue;
             }
             if (response == null) {
-                Thread.sleep(1000);
+                Thread.sleep((long) (1000+random()*2000*failed_count));
+                failed_count++;
+                log("url failed :"+url+"\nfailed_count:"+failed_count);
                 continue;
             }
             if (response.statusCode() == 200) {
                 break;
             } else {
-                Thread.sleep(1000);
+                Thread.sleep((long) (1000+random()*2000*failed_count));
+                failed_count++;
+                log("url failed :"+url+"\nfailed_count:"+failed_count);
+                continue;
             }
         }
-        if (response==null || response.statusCode() != 200) {
-            System.out.println(response.statusCode() + " " + response.statusMessage());
+        if(response==null){
+            log("未知错误");
+            throw new IOException("请求失败");
+        }
+        if ( response.statusCode() != 200) {
+            log(response.statusCode() + " " + response.statusMessage());
             throw new IOException("请求失败:" + response.statusCode());
         }
         return response;
     }
 
     public ArrayList<Paper> getPapers(String url) throws IOException, InterruptedException {
-        Connection.Response response = get(url);
-        Document document = response.parse();
-        ArrayList<Paper> papers = ParsePapers(document);
+        ArrayList<Paper> papers;
+        try{
+            Connection.Response response = get(url);
+            Document document = response.parse();
+            papers= ParsePapers(document);
+        }catch (IOException e){
+            log(e.getMessage());
+            papers = new ArrayList<>();
+        }
         return papers;
     }
 
@@ -161,9 +185,11 @@ public class GoogleAPI {
                 }
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            log(e.getMessage());
+            return futures;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            log(e.getMessage());
+            return futures;
         }
         return futures;
     }
@@ -176,7 +202,7 @@ public class GoogleAPI {
                 papers.addAll(ParsePapers(doc));
             }
         }catch (IOException | InterruptedException e) {
-            System.out.println("从url: " + now_url + "\n获取信息失败");
+            log("从url: " + now_url + "\n获取信息失败");
             e.printStackTrace();
         }
         return papers;
@@ -207,7 +233,7 @@ public class GoogleAPI {
                 }
             }
         } catch (IOException | InterruptedException e) {
-            System.out.println("从url: " + now_url + "\n获取信息失败");
+            log("从url: " + now_url + "\n获取信息失败");
             e.printStackTrace();
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
@@ -244,7 +270,7 @@ public class GoogleAPI {
 
             }
         } catch (IOException e) {
-            System.out.println("从url: " + now_url + "\n获取信息失败");
+            log("从url: " + now_url + "\n获取信息失败");
             e.printStackTrace();
         } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -281,15 +307,20 @@ public class GoogleAPI {
                         Paper p = wait_paper_queue.poll();
                         List<Paper> temp = new ArrayList<>();
                         for (var future : futures) {
-                            temp.addAll(future.get());
+                            try{
+                                temp.addAll(future.get());
+                            }catch (ExecutionException e){
+                                log(e.getMessage());
+                            }
                         }
                         p.setCited_uid(temp.stream().map(Paper::get_uid).map(String::valueOf).collect(Collectors.joining(",")));
                         paperMap.put(p.get_uid(), p);
                         temp.stream().filter(pp->!visited.contains(pp.get_uid())).forEach(pp -> paperMap.put(pp.get_uid(), pp));
                         temp = Paper.filter(temp, new Paper.CitedFilter()).toList();
-                        visited.add(p.get_uid());
+                        if(temp.size()>25){
+                            temp = Paper.filter(temp, new Paper.CitedCountFilter(25)).toList();
+                        }
                         temp.stream().forEach(pp->{
-//                            System.out.println(d);
                             search_depth.offer(d);
                             search_paper_queue.offer(pp);
                         });
@@ -303,15 +334,15 @@ public class GoogleAPI {
             Paper p = search_paper_queue.poll();
             wait_paper_queue.add(p);
             int d = search_depth.poll();
-//            System.out.println("Search:"+p.getTitle());
-//            System.out.println("depth:"+d);
+            log("Search:"+p.getTitle());
             if (d > depth) {
                 break;
             }
             if (visited.contains(p.get_uid())) {
                 continue;
             }
-            results.add(GetFutureFromCited(p.getCited_url(),Integer.MAX_VALUE));
+            visited.add(p.get_uid());
+            results.add(GetFutureFromCited(p.getCited_url(),100));
             search_depth.add(d+1);
         }
         return new ArrayList<>(paperMap.values());

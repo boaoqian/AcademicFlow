@@ -1,0 +1,15 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="PaperInfo:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PaperInfo_jar</output-path>
+    <root id="root">
+      <element id="archive" name="PaperInfo.jar">
+        <element id="module-output" name="PaperInfo" />
+        <element id="module-output" name="API" />
+        <element id="module-output" name="Database" />
+        <element id="module-output" name="Paper" />
+      </element>
+      <element id="library" level="project" name="Maven: org.xerial:sqlite-jdbc:3.47.0.0" />
+      <element id="library" level="project" name="Maven: org.jsoup:jsoup:1.18.1" />
+    </root>
+  </artifact>
+</component>

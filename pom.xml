@@ -27,5 +27,6 @@
             <artifactId>jsoup</artifactId>
             <version>1.18.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.graphstream/gs-core -->
     </dependencies>
 </project>

@@ -159,7 +159,7 @@ public class Paper {
         if (year > 0) {
             info += "Year: " + year + "\n";
         }
-        if (abstract_text.length()>10){
+        if (abstract_text!=null&&abstract_text.length()>10){
             info += "Abstract: " + abstract_text + "\n";
         }
         info += "*".repeat(20) + "\n";

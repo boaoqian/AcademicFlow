@@ -1,6 +1,5 @@
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Utils {
     static String db_url = "jdbc:sqlite:dbs/paperinfo.sqlite";
@@ -94,10 +93,52 @@ public class Utils {
         }
     }
     public static void batchInsert(List<Paper> papers) throws SQLException {
-        for (Paper paper : papers) {
-            Utils.insert(paper);
+        // 使用单个连接
+        try (Connection conn = DriverManager.getConnection(db_url)) {
+            // 关闭自动提交
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+                // 批量处理
+                for (Paper paper : papers) {
+                    if (checkPaperExists(paper.get_uid())) {
+                        delete(paper.get_uid());
+                    }
+                    pstmt.setInt(1, paper.get_uid());
+                    pstmt.setString(2, paper.getTitle());
+                    pstmt.setInt(3, paper.getYear());
+                    pstmt.setString(4, paper.getAuthor());
+                    pstmt.setString(5, paper.getAbstract());
+                    pstmt.setString(6, paper.getCited_uid());
+                    pstmt.setString(7, paper.getRelation_uid());
+                    pstmt.setString(8, paper.getPdf_url());
+                    pstmt.setString(9, paper.getRelation_url());
+                    pstmt.setString(10, paper.getCited_url());
+                    pstmt.setInt(11, paper.getCited_count());
+                    // 添加到批处理
+                    pstmt.addBatch();
+
+                    // 每1000条执行一次
+                    if (papers.indexOf(paper) % 500 == 0) {
+                        pstmt.executeBatch();
+                    }
+                }
+
+                // 执行剩余的批处理
+                pstmt.executeBatch();
+
+                // 提交事务
+                conn.commit();
+
+            } catch (SQLException e) {
+                // 发生错误时回滚
+                conn.rollback();
+                System.out.println("批量插入错误：" + e.getMessage());
+                throw e;
+            }
         }
     }
+
 
     public static Paper getPaper(int uid) throws SQLException {
         String sql = "SELECT * FROM paperinfo WHERE uid = ?";
@@ -110,6 +151,56 @@ public class Utils {
         }
     }
 
+    public static HashMap<Paper, List<Paper>> buildGraph(Paper rootPaper, int maxDepth) {
+        HashMap<Paper, List<Paper>> adjacencyList = new HashMap<>();
+        if (rootPaper == null) return adjacencyList;
+
+        Queue<Paper> searchQueue = new LinkedList<>();
+        Queue<Integer> depthQueue = new LinkedList<>();
+        Set<Integer> visited = new HashSet<>();
+
+        searchQueue.offer(rootPaper);
+        depthQueue.offer(0);
+        visited.add(rootPaper.get_uid());
+
+        while (!searchQueue.isEmpty()) {
+            Paper currentPaper = searchQueue.poll();
+            int currentDepth = depthQueue.poll();
+
+            // 初始化当前节点的邻接表
+            adjacencyList.putIfAbsent(currentPaper, new ArrayList<>());
+
+            if (currentDepth >= maxDepth) continue;
+
+            if (currentPaper.getCited_uid()==null||currentPaper.getCited_uid().isEmpty()){
+                visited.add(currentPaper.get_uid());
+                continue;
+            }
+            String[] citedPaperIds = currentPaper.getCited_uid().split(",");
+
+            for (String idStr : citedPaperIds) {
+                if (idStr.trim().isEmpty()) continue;
+
+                try {
+                    Paper citedPaper = getPaper(Integer.parseInt(idStr));
+                    // 添加引用关系到邻接表
+                    adjacencyList.get(currentPaper).add(citedPaper);
+
+                    if (!visited.contains(citedPaper.get_uid())) {
+                        visited.add(citedPaper.get_uid());
+                        searchQueue.offer(citedPaper);
+                        depthQueue.offer(currentDepth + 1);
+                    }
+                } catch (SQLException | NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return adjacencyList;
+    }
+
+
     public static Paper createPaperFromRS(ResultSet rs) throws SQLException {
         return new Paper(
                 rs.getString("title"),
@@ -119,9 +210,9 @@ public class Utils {
                 rs.getString("cited_url"),
                 rs.getString("pdf"),
                 rs.getInt("cited_count"),
-                rs.getString("abstract"),// 数据库中是 pdf
-                rs.getString("relation_uid"),
-                rs.getString("cited_uid")
+                rs.getString("abstract"),
+                rs.getString("cited_uid"),
+                rs.getString("relation_uid")
         );
     }
 
