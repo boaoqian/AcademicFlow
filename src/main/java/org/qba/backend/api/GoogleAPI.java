@@ -5,6 +5,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.qba.backend.paper.Paper;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,7 +34,7 @@ public class GoogleAPI {
         threadPool = Executors.newFixedThreadPool(numThreads);
     }
 
-    GoogleAPI() {
+    public GoogleAPI() {
         threadPool = Executors.newFixedThreadPool(4);
     }
     public static void log(String mas){

@@ -1,5 +1,7 @@
 package org.qba.backend.database;
 
+import org.qba.backend.paper.Paper;
+
 import java.sql.*;
 import java.util.*;
 

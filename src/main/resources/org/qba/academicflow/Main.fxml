@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="700.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1"  fx:controller="org.qba.academicflow.MainController" fx:id="root">
+
+    <!-- Left Top Background Image -->
+    <ImageView fitHeight="494.0" fitWidth="366.0" layoutX="-64.0" layoutY="-203.0" AnchorPane.leftAnchor="-64.0" AnchorPane.topAnchor="-203.0">
+        <Image url="@bk.png" />
+    </ImageView>
+
+    <!-- Right Bottom Background Image -->
+    <ImageView fitHeight="452.0" fitWidth="394.0" layoutX="903.0" layoutY="424.0" AnchorPane.bottomAnchor="-176.0" AnchorPane.rightAnchor="-52.858184814453125">
+        <Image url="@bk.png" />
+    </ImageView>
+    <!-- Centering Container -->
+    <VBox alignment="CENTER" spacing="20" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+
+        <!-- Logo Image Container -->
+        <HBox alignment="CENTER">
+            <ImageView fx:id="logoImage" fitHeight="176.0" fitWidth="574.0" preserveRatio="true">
+                <Image url="@title.png" />
+            </ImageView>
+        </HBox>
+
+        <!-- Search Field -->
+        <TextField fx:id="searchField" onKeyPressed="#EnterSearch" maxWidth="800.0" minWidth="200.0" prefHeight="50.0" prefWidth="800.0" style="-fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #dfe1e5; -fx-border-width: 1;">
+            <padding>
+                <Insets left="20.0" right="20.0" />
+            </padding>
+            <font>
+                <Font name="Noto Sans CJK SC Medium" size="33.0" />
+            </font>
+        </TextField>
+
+        <!-- Buttons Container -->
+        <HBox alignment="CENTER" spacing="10">
+            <Button fx:id="searchbt" onAction="#handleSearch" prefHeight="60.0" prefWidth="160.0" style="-fx-background-color: #f8f9fa; -fx-border-color: transparent; -fx-background-radius: 20; -fx-padding: 8 16;" styleClass="animated-button" text="Paper Search" textAlignment="CENTER">
+                <font>
+                    <Font name="Noto Sans CJK SC Medium" size="18.0" />
+                </font>
+            </Button>
+            <Button fx:id="randombt" onAction="#handleLucky" prefHeight="60.0" prefWidth="189.0" style="-fx-background-color: #f8f9fa; -fx-border-color: transparent; -fx-background-radius: 20; -fx-padding: 8 16;" styleClass="animated-button" text="I'm Feeling Lucky" textAlignment="CENTER">
+                <font>
+                    <Font name="Noto Sans CJK SC Medium" size="18.0" />
+                </font>
+            </Button>
+        </HBox>
+    </VBox>
+</AnchorPane>

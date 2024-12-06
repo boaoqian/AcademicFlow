@@ -55,8 +55,8 @@ public class Paper {
         }
     }
 
-    Paper(String title, int year, String authorInfo, String relation_url, String cited_url,
-          String pdf_url, int cited_count, String abstract_text, String cited_uid, String relation_uid) {
+    public Paper(String title, int year, String authorInfo, String relation_url, String cited_url,
+                 String pdf_url, int cited_count, String abstract_text, String cited_uid, String relation_uid) {
         this.title = title;
         this.year = year;
         this.authorInfo = authorInfo;
