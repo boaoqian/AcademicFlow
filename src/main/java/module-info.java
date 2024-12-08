@@ -7,12 +7,11 @@ module org.qba.academicflow {
     requires org.jsoup;
     requires java.sql;
     requires org.slf4j;
-    requires atlantafx.base;
-
     opens org.qba.academicflow to javafx.fxml;
     exports org.qba.academicflow;
     exports org.qba.backend.api;
     exports org.qba.backend.paper;
     exports org.qba.backend.database;
-
+    exports org.qba.RSGraph;
+    opens org.qba.RSGraph to javafx.fxml;
 }
