@@ -2,6 +2,7 @@ package org.qba.RSGraph;
 
 import javafx.animation.*;
 import javafx.beans.binding.DoubleBinding;
+import javafx.event.Event;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -10,11 +11,13 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Transform;
+import org.qba.academicflow.Server;
 
 import java.util.*;
 import static javafx.scene.Cursor.*;
 
 public class RelationshipGraph {
+    private Server.NodeEventBus eventBus;
     private final Pane root;
     private final Scene scene;
     private final Map<Integer, GraphNode> nodes = new HashMap<>();
@@ -23,8 +26,8 @@ public class RelationshipGraph {
     private AnimationTimer forceTimer;
     private final DoubleBinding centerXBinding ;
     private final DoubleBinding centerYBinding ;
-    private double centerF_r = 0.001;
-    private double edgeL = 200;
+    private double centerF_r = 0.05;
+    private double edgeL = 150;
     private double nodeF = 1000000;
     // 使用时间戳控制
     private long lastUpdate = 0;
@@ -34,9 +37,10 @@ public class RelationshipGraph {
         root = new Pane();
         root.getStyleClass().add("relationship-graph-root");
         scene = new Scene(root);
+        eventBus = Server.NodeEventBus.getInstance();
         centerXBinding = root.widthProperty().divide(2);
         centerYBinding = root.heightProperty().divide(2);
-        initializeGraph("root");
+        initializeGraph();
     }
     public static class plainVertex extends Vertex{
         private final int id;
@@ -56,7 +60,7 @@ public class RelationshipGraph {
         }
         @Override
         public Double getsize() {
-            return 30.0;
+            return 15.0;
         }
     }
 
@@ -75,7 +79,7 @@ public class RelationshipGraph {
     }
 
     // 初始化图形
-    public void initializeGraph(String rootlabel) {
+    public void initializeGraph() {
         // 力导向布局动画
         forceTimer = new AnimationTimer() {
             @Override
@@ -86,7 +90,6 @@ public class RelationshipGraph {
                 }
             }
         };
-        forceTimer.start();
     }
 
     // 启动动画
@@ -107,18 +110,25 @@ public class RelationshipGraph {
         // 添加拖拽相关的变量
         private double dragBaseX, dragBaseY;
         private boolean isDragging = false;
+        private int id;
 
-        GraphNode(Vertex vertex,double x, double y) {
+        GraphNode(Vertex vertex, double x, double y, boolean is_root) {
+            id = vertex.getId();
             circle = new Circle(x, y, vertex.getsize()+5);
-            circle.getStyleClass().add("vertex");
-            text = new Text(vertex.getLabel());
+            if (is_root) {
+                circle.getStyleClass().add("vertex-root");
+            }else{
+                circle.getStyleClass().addAll("vertex","base");
+            }
+            String label = vertex.getLabel();
+            text = new Text(label);
             text.getStyleClass().add("vertex-text");
             text.setMouseTransparent(true);  // 使文本不接收鼠标事件
             text.setFocusTraversable(false); // 禁止焦点遍历
-            text.xProperty().bind(circle.centerXProperty()
-                    .subtract(text.layoutBoundsProperty().getValue().getWidth() / 2));
-            text.yProperty().bind(circle.centerYProperty()
-                    .add(text.layoutBoundsProperty().getValue().getHeight() / 4));
+            text.xProperty().bind(circle.centerXProperty());
+            text.yProperty().bind(circle.centerYProperty());
+            text.setTranslateX(-text.getLayoutBounds().getWidth() / 2);
+            text.setTranslateY(text.getLayoutBounds().getHeight() / 2);
             /*外面
             text.xProperty().bind(circle.centerXProperty()
                     .subtract(text.layoutBoundsProperty().getValue().getWidth() / 2));
@@ -134,6 +144,7 @@ public class RelationshipGraph {
                 isDragging = true;
                 // 提高被拖拽节点的层级
                 circle.toFront();
+                eventBus.publish(new Server.NodeEvent(Server.NodeEvent.PRESSED, vertex.getId()));
             });
 
             circle.setOnMouseDragged(e -> {
@@ -147,15 +158,14 @@ public class RelationshipGraph {
                     Point2D localPoint = root.sceneToLocal(e.getSceneX(), e.getSceneY());
 
                     // 应用缩放补偿
-                    circle.setCenterX(localPoint.getX() - dragBaseX/currentScale);
-                    circle.setCenterY(localPoint.getY() - dragBaseY/currentScale);
-                    // 限制在视图范围内
-                    circle.setCenterX(Math.max(50, Math.min(root.getWidth(), circle.getCenterX())));
-                    circle.setCenterY(Math.max(50, Math.min(root.getHeight(), circle.getCenterY())));
+                    double newX = Math.max(50, Math.min(root.getWidth()-50, localPoint.getX() - dragBaseX/currentScale));
+                    double newY = Math.max(50, Math.min(root.getHeight()-50, localPoint.getY() - dragBaseY/currentScale));
+                    circle.setCenterX(newX);
+                    circle.setCenterY(newY);
                 }
             });
-
             circle.setOnMouseReleased(e -> {
+                Event.fireEvent(root, new Server.NodeEvent(Server.NodeEvent.RELEASED,vertex.getId()));
                 isDragging = false;
                 text.toFront();
             });
@@ -170,19 +180,50 @@ public class RelationshipGraph {
             });
         }
         GraphNode(Vertex vertex){
-            this(vertex,0,0);
+            this(vertex,centerXBinding.get(),centerYBinding.get(),false);
+        }
+        GraphNode(Vertex vertex, boolean is_root){
+            this(vertex,centerXBinding.get(),centerYBinding.get(),is_root);
         }
     }
+    public void addRoot(Vertex vertex) {
+        if (nodes.get(vertex.getId())!=null) {
+            return;
+        }
+        GraphNode node = new GraphNode(vertex,true);
+        nodes.put(vertex.getId(), node);
+        root.getChildren().addAll(node.circle,node.text);
+    }
     public void addNode(Vertex vertex) {
+        if (nodes.get(vertex.getId())!=null) {
+            return;
+        }
 //        stopAnimation();
         GraphNode node = new GraphNode(vertex);
         nodes.put(vertex.getId(), node);
         root.getChildren().addAll(node.circle,node.text);
 //        startAnimation();
     }
+    public void addNodes(List<? extends Vertex> vertices) {
+        stopAnimation();
+        for(var v : vertices) {
+            addNode(v);
+
+        }
+        startAnimation();
+    }
+    public void addEdges(int from, List<Integer> to) {
+        stopAnimation();
+        for(var t : to) {
+            addEdge(from, t);
+        }
+        startAnimation();
+    }
     public void addEdge(GraphEdge edge) {
 //        stopAnimation();
         edges.add(edge);
+        root.getChildren().addAll(edge.line);
+        edge.line.toBack();
 //        startAnimation();
     }
     public void addEdge(int srcId,int dscId){
@@ -211,11 +252,26 @@ public class RelationshipGraph {
             this.source = source;
             this.target = target;
             line = new Line();
+            line.setMouseTransparent(true);  // 使文本不接收鼠标事件
+            line.setFocusTraversable(false); // 禁止焦点遍历
             line.getStyleClass().add("edge");
             line.startXProperty().bind(source.circle.centerXProperty());
             line.startYProperty().bind(source.circle.centerYProperty());
             line.endXProperty().bind(target.circle.centerXProperty());
             line.endYProperty().bind(target.circle.centerYProperty());
+            // 监听line的parent属性
+            eventBus.subscribe(event -> {
+                if (event.getEventType() == Server.NodeEvent.PRESSED) {
+                    if(event.getNodeid() == source.id) {
+                        target.circle.getStyleClass().remove("base");
+                        target.circle.getStyleClass().add("link");
+                    }
+                    else if(event.getNodeid() == target.id) {
+                        source.circle.getStyleClass().remove("base");
+                        source.circle.getStyleClass().add("link");
+                    }
+                }
+            });
         }
     }
 
@@ -246,12 +302,7 @@ public class RelationshipGraph {
             //向心力
             double dx = centerXBinding.get() - node.circle.getCenterX();
             double dy = centerYBinding.get() - node.circle.getCenterY();
-            if(Math.abs(dy)>600){
-                dy*=10;
-            }
-            if(Math.abs(dx)>600){
-                dx*=10;
-            }
+
             // 计算力的分量
             if (!node.isDragging){
 //                System.out.println(centerXBinding.get();
@@ -273,7 +324,8 @@ public class RelationshipGraph {
                 double dy = n1.circle.getCenterY() - n2.circle.getCenterY();
                 double distance = Math.sqrt(dx * dx + dy * dy);
                 if(distance==0){
-                    dx=random.nextDouble();
+                    dx=random.nextDouble()*5;
+                    dy=random.nextDouble()*5;
                 }
                 if (distance < 1) distance = 1;
 
@@ -293,19 +345,20 @@ public class RelationshipGraph {
             double distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < 0.1) {  // 设置最小距离阈值
                 distance = 0.1;
-                dy+=random.nextDouble();
+                dy+=random.nextDouble()*10;
+                dx+=random.nextDouble()*10;
             }
             double force = (distance - edgeL) ;
             dx *= force / distance;
             dy *= force / distance;
 
             if(edge.source.isDragging){
-                edge.target.dx -= 10*dx;
-                edge.target.dy -= 10*dy;
+                edge.target.dx -= 2*dx;
+                edge.target.dy -= 2*dy;
             }
             else if(edge.target.isDragging){
-                edge.source.dx += 5*dx;
-                edge.source.dy += 5*dy;
+                edge.source.dx += 2*dx;
+                edge.source.dy += 2*dy;
             }
             else {
                 edge.source.dx += dx;
@@ -317,14 +370,17 @@ public class RelationshipGraph {
 
         // 应用力的效果
         for (GraphNode node : nodes.values()) {
-            node.circle.setCenterX(node.circle.getCenterX() + node.dx * 0.1);
-            node.circle.setCenterY(node.circle.getCenterY() + node.dy * 0.1);
+            node.circle.setCenterX(node.circle.getCenterX() + Math.max(-100,Math.min(node.dx * 0.1,100)));
+            node.circle.setCenterY(node.circle.getCenterY() + Math.max(-100,Math.min(node.dy * 0.1,100)));
 
             // 限制在视图范围内
-            node.circle.setCenterX(Math.max(50, Math.min(root.getWidth(), node.circle.getCenterX())));
-            node.circle.setCenterY(Math.max(50, Math.min(root.getHeight(), node.circle.getCenterY())));
+            double padding = 50+random.nextDouble();
+            node.circle.setCenterX(Math.max(padding*random.nextDouble(), Math.min(root.getWidth()-padding, node.circle.getCenterX())));
+            node.circle.setCenterY(Math.max(padding, Math.min(root.getHeight()-padding, node.circle.getCenterY())));
         }
     }
+
+
 
 }
 

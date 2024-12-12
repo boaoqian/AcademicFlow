@@ -6,7 +6,7 @@
 
 
 <AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.qba.academicflow.Graphpanel">
+            fx:controller="org.qba.academicflow.GraphController">
    <children>
    </children>
    <VBox fx:id="infoBar" alignment="TOP_CENTER" layoutX="468.0" prefHeight="400.0" prefWidth="132.0"

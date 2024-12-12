@@ -3,7 +3,12 @@ package org.qba.academicflow;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
@@ -17,7 +22,9 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.qba.academicflow.Server.log;
 
 public class SearchResultController implements Initializable {
     public Button searchButton;
@@ -30,13 +37,13 @@ public class SearchResultController implements Initializable {
     private GoogleAPI api = Server.getInstance().getApi();
     private ExecutorService executor = Server.getInstance().getExecutor();
     private HostServices hostServices;
-
+    private Future now_search;
     public void setDataModel(InfoModel userdata) {
         this.userdata = userdata;
     }
     public void performSearch(String query) {
         try {
-            executor.submit(() -> {
+            now_search = executor.submit(() -> {
                 try {
                     Server.log("search for "+query);
 
@@ -84,6 +91,13 @@ public class SearchResultController implements Initializable {
     }
 
     public void handleSearch(ActionEvent actionEvent) {
+        if (now_search!=null) {
+            now_search.cancel(true);
+        }
+        userdata.search_name = searchField.getText();
+        if (!searchField.getText().isEmpty()) {
+            performSearch(searchField.getText());
+        }
     }
 
     public void initData(InfoModel userdata) {
@@ -100,6 +114,7 @@ public class SearchResultController implements Initializable {
 
     private void handleGraphBuilt(Server.PaperEvent paperEvent) {
         Server.log("graph built");
+        switchScene(paperEvent,paperEvent.getPaper());
     }
 
     private void handleGetPDF(Server.PaperEvent paperEvent) {
@@ -108,6 +123,23 @@ public class SearchResultController implements Initializable {
         if (paper.getPdf_url() != null && !paper.getPdf_url().isEmpty()) {
             Server.log(paper.getPdf_url());
             MainApplication.getAppHostServices().showDocument(paper.getPdf_url());
+        }
+    }
+    public void switchScene(Event event,Paper paper) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("graphpanel.fxml"));
+            Parent root = loader.load();
+            GraphController newController = loader.getController();
+            newController.setSearch_paper(paper);  // 先设置数据模型
+            Stage stage = (Stage)((Node)event.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("smartgraph.css").toExternalForm());
+            stage.setScene(scene);
+            newController.buildGraph();
+            stage.show();
+        } catch(Exception e) {
+            log("failed load searcher");
+            e.printStackTrace();
         }
     }
 }

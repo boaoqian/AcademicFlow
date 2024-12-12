@@ -320,8 +320,8 @@ public class GoogleAPI {
                         paperMap.put(p.get_uid(), p);
                         temp.stream().filter(pp->!visited.contains(pp.get_uid())).forEach(pp -> paperMap.put(pp.get_uid(), pp));
                         temp = Paper.filter(temp, new Paper.CitedFilter()).toList();
-                        if(temp.size()>25){
-                            temp = Paper.filter(temp, new Paper.CitedCountFilter(25)).toList();
+                        if(temp.size()>10){
+                            temp = Paper.filter(temp, new Paper.CitedCountFilter(10)).toList();
                         }
                         temp.stream().forEach(pp->{
                             search_depth.offer(d);

@@ -8,7 +8,7 @@
 
 /* 边（连线）样式 */
 .edge {
-    -fx-stroke: #666666;  /* 线条颜色 */
+    -fx-stroke: rgba(91, 89, 89, 0.36);  /* 线条颜色 */
     -fx-stroke-width: 2;  /* 线条宽度 */
     -fx-stroke-line-cap: round;  /* 线条端点样式 */
     -fx-opacity: 0.8;  /* 透明度 */
@@ -25,38 +25,47 @@
     -fx-opacity: 1;
 }
 
-/* 顶点（节点）样式 */
-.vertex {
-    -fx-fill: white;  /* 填充颜色 */
+.vertex-text {
+    -fx-fill: rgb(0, 0, 0);
+    -fx-font-family: "Noto Sans CJK SC";
+    -fx-font-size: 10px;
+}
+
+.vertex-root {
+    -fx-fill: rgb(206, 253, 208);
     -fx-stroke: #2c3e50;  /* 边框颜色 */
     -fx-stroke-width: 2;  /* 边框宽度 */
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 0);  /* 阴影效果 */
-
-    /* 文本样式 */
-    -fx-font-family: "Arial";
-    -fx-font-size: 14px;
-    -fx-text-fill: #2c3e50;
 }
 
-/* 顶点的悬停效果 */
-.vertex:hover {
-    -fx-fill: #ecf0f1;  /* 悬停时的背景色 */
-    -fx-stroke: #3498db;  /* 悬停时的边框色 */
+.vertex.base {
+    -fx-fill: #aed8ff;
+    -fx-stroke: #2c3e50;  /* 边框颜色 */
+    -fx-stroke-width: 2;  /* 边框宽度 */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 0);  /* 阴影效果 */
+}
+
+.vertex.base:hover {
+    -fx-fill: rgb(204, 244, 204);  /* 悬停时的背景色 */
+    -fx-stroke: #8aeb8c;  /* 悬停时的边框色 */
     -fx-cursor: hand;  /* 鼠标样式变为手型 */
     -fx-scale-x: 1.1;  /* 悬停时略微放大 */
     -fx-scale-y: 1.1;
 }
-
 /* 选中状态的顶点样式 */
 .vertex:selected {
     -fx-fill: #52a4d5;  /* 选中时的填充色 */
     -fx-stroke: #003c61;  /* 选中时的边框色 */
     -fx-text-fill: white;  /* 选中时的文本颜色 */
+    -fx-stroke-width: 2;  /* 边框宽度 */
 }
 
 /* 可选：为不同类型的顶点设置不同样式 */
-.vertex.type1 {
-    -fx-fill: #e74c3c;
+.vertex.link {
+    -fx-fill: #8aeb8c;
+    -fx-stroke: #2c3e50;  /* 边框颜色 */
+    -fx-stroke-width: 2;  /* 边框宽度 */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 0);  /* 阴影效果 */
 }
 
 .vertex.type2 {
