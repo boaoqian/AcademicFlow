@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="root" prefHeight="700.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.qba.academicflow.SearchResultController" >
+<AnchorPane fx:id="root" prefHeight="700.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.qba.academicflow.SearchResultController">
 
     <!-- Right Bottom Background Image -->
     <ImageView fitHeight="452.0" fitWidth="394.0" layoutX="903.0" layoutY="424.0" AnchorPane.bottomAnchor="-176.0" AnchorPane.rightAnchor="-52.858184814453125">
@@ -47,6 +47,11 @@
                 </font>
             </Button>
         </HBox>
+      <Label fx:id="failedlabel" alignment="TOP_CENTER" contentDisplay="CENTER" prefHeight="6.0" prefWidth="436.0" style="-fx-border-style: solid; -fx-border-radius: 10; -fx-border-color: #084365;" text="find 0 paper" textAlignment="CENTER" textFill="#0a6190" wrapText="true">
+         <font>
+            <Font name="Noto Sans CJK SC Medium" size="26.0" />
+         </font>
+      </Label>
       <Label fx:id="searching_label" alignment="TOP_CENTER" contentDisplay="CENTER" prefHeight="6.0" prefWidth="436.0" style="-fx-border-style: solid; -fx-border-radius: 10; -fx-border-color: #084365;" text="Searching..." textAlignment="CENTER" textFill="#0a6190" wrapText="true">
          <font>
             <Font name="Noto Sans CJK SC Medium" size="26.0" />

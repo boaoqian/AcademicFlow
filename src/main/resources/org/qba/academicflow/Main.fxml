@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="700.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1"  fx:controller="org.qba.academicflow.MainController" fx:id="root">
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1"  fx:controller="org.qba.academicflow.MainController" fx:id="root">
 
     <!-- Left Top Background Image -->
     <ImageView fitHeight="494.0" fitWidth="366.0" layoutX="-64.0" layoutY="-203.0" AnchorPane.leftAnchor="-64.0" AnchorPane.topAnchor="-203.0">

@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 public class Server {
     private static volatile Server instance;
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
-    private  final GoogleAPI api = new GoogleAPI();
+    private  GoogleAPI api = new GoogleAPI();
     private Server() {    }
     //静态方法
     public static void log(String message) {
@@ -38,6 +38,10 @@ public class Server {
     public  void close(){
         executor.shutdown();
         api.close();
+    }
+    public void restartApi() {
+        api.close();
+        api = new GoogleAPI();
     }
     // 自定义事件类
     public static class PaperEvent extends Event {

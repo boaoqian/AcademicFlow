@@ -1,17 +1,29 @@
 package org.qba.academicflow;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
-import javafx.util.Duration;
+import javafx.stage.Stage;
+import javafx.util.*;
 import org.qba.backend.paper.Paper;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class makeView {
     public static VBox createListElement(Paper paper) {
@@ -98,6 +110,56 @@ public class makeView {
         });
 
         vbox.getChildren().addAll(titleLabel, authorLabel, thirdLabel, buttonBox);
+        return vbox;
+    }
+    public static VBox createPaperInfoElementSimple(Paper paper) {
+        VBox vbox = new VBox();
+        vbox.setFillWidth(true);
+        vbox.setPrefWidth(10000);
+        vbox.setMaxWidth(Double.MAX_VALUE); // 设置最大宽度
+        VBox.setVgrow(vbox, Priority.ALWAYS); // 垂直方向填充
+        vbox.setSpacing(15);  // 增加间距使布局更加宽松
+        vbox.setPadding(new Insets(20));  // 增加内边距
+        vbox.getStyleClass().add("paper-info");
+
+        // 标题
+        Label titleLabel = new Label(paper.getTitle());
+        titleLabel.setWrapText(true);
+        titleLabel.getStyleClass().add("paper-title");
+
+        // 作者和引用信息
+        Label authorLabel = new Label(paper.getAuthor() + " (" + paper.getYear() + ")");
+        Label citationLabel = new Label("Citations: " + paper.getCited_count());
+        authorLabel.getStyleClass().add("paper-author");
+        citationLabel.getStyleClass().add("citation-count");
+
+
+        Label abstractTitle = new Label("Abstract");
+        abstractTitle.getStyleClass().add("abstract-title");
+
+        Label abstractLabel = new Label(paper.getAbstract());
+        abstractLabel.setWrapText(true);
+        abstractLabel.getStyleClass().add("abstract-text");
+
+
+        // PDF下载按钮
+        Button getPdfBtn = new Button("Download PDF");
+        getPdfBtn.getStyleClass().add("pdf-button");
+
+
+        // 根据PDF URL状态设置按钮
+        if (paper.getPdf_url() != null && !paper.getPdf_url().isEmpty()) {
+            getPdfBtn.setOnMouseClicked(event -> {
+                Server.log(paper.getPdf_url());
+                MainApplication.getAppHostServices().showDocument(paper.getPdf_url());
+            });
+        } else {
+            getPdfBtn.setDisable(true);
+        }
+
+        // 将所有元素添加到VBox
+        vbox.getChildren().addAll(titleLabel, authorLabel, citationLabel, abstractLabel, getPdfBtn);
+
         return vbox;
     }
 

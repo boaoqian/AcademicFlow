@@ -6,7 +6,7 @@ import java.sql.*;
 import java.util.*;
 
 public class Utils {
-    static String db_url = "jdbc:sqlite:dbs/paperinfo.sqlite";
+    static String db_url = "jdbc:sqlite:PaperData/paperinfo.sqlite";
     // SQL 创建表语句（如果表不存在）
     static String createTableSQL = "CREATE TABLE IF NOT EXISTS paperinfo ("
             + "uid INTEGER PRIMARY KEY, "
@@ -18,7 +18,7 @@ public class Utils {
             + "relation_uid TEXT, "
             + "pdf TEXT, "
             + "relation_url TEXT, "
-            + "cited_url TEXT"
+            + "cited_url TEXT, "
             + "cited_count INTEGER"
             + ");";
     // SQL 插入数据语句

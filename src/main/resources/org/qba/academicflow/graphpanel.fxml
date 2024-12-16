@@ -1,15 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-
-<AnchorPane fx:id="root" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="org.qba.academicflow.GraphController">
+<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.qba.academicflow.GraphController">
    <children>
+      <HBox fx:id="infoBar" viewOrder="-1" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+         <!-- 拖拽区域 - 放在HBox的开始位置 -->
+         <VBox fx:id="dragArea" alignment="TOP_RIGHT" maxWidth="4" minWidth="4" prefWidth="4" styleClass="drag-area" viewOrder="-1">
+            <ImageView fx:id="closebt" accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#closeTab" pickOnBounds="true" smooth="false">
+               <image>
+                  <Image url="@closebt.png" />
+               </image>
+               <cursor>
+                  <Cursor fx:constant="OPEN_HAND" />
+               </cursor>
+            </ImageView>
+            <Region styleClass="drag-handle" VBox.vgrow="ALWAYS" />
+         </VBox>
+
+         <!-- InfoBar主体 -->
+         <VBox alignment="TOP_CENTER" prefWidth="200.0" styleClass="info-bar" HBox.hgrow="ALWAYS">
+            <padding>
+               <Insets bottom="10" left="10" right="10" top="10" />
+            </padding>
+            <children>
+               <VBox fx:id="resultBar" alignment="TOP_CENTER" maxWidth="800" styleClass="result-bar" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                  <padding>
+                     <Insets bottom="5" left="5" right="5" top="5" />
+                  </padding>
+               </VBox>
+               <VBox fx:id="setting" alignment="TOP_CENTER" maxWidth="Infinity" styleClass="setting-bar" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+                  <padding>
+                     <Insets bottom="5" left="5" right="5" top="5" />
+                  </padding>
+               </VBox>
+            </children>
+         </VBox>
+      </HBox>
+      <ImageView fx:id="optbt" fitHeight="31.0" fitWidth="30.0" layoutX="14.0" layoutY="14.0" nodeOrientation="INHERIT" onMouseClicked="#optMenuOpen" pickOnBounds="true" preserveRatio="true" viewOrder="-1" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="14.0">
+         <image>
+            <Image url="@option.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="OPEN_HAND" />
+         </cursor>
+      </ImageView>
+      <VBox fx:id="menubar" layoutX="14.0" layoutY="45.0" prefHeight="71.0" prefWidth="118.0" style="-fx-border-width: 1; -fx-border-radius: 5; -fx-border-color: #1971c2;" viewOrder="-1" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="45.0">
+         <children>
+            <Button fx:id="backbt" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" onMouseClicked="#backtomain" prefHeight="0.0" prefWidth="267.0" styleClass="optbt" text="back" textAlignment="CENTER" VBox.vgrow="ALWAYS" />
+            <Button fx:id="savebt" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" onMouseClicked="#savegraph" prefHeight="13.0" prefWidth="208.0" styleClass="optbt" text="save graph" textAlignment="CENTER" VBox.vgrow="ALWAYS" />
+         </children>
+      </VBox>
    </children>
-   <VBox fx:id="infoBar" alignment="TOP_CENTER" layoutX="468.0" prefHeight="400.0" prefWidth="132.0"
-         style="-fx-background-color: #dddddd;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="468.0"
-         AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"/>
 </AnchorPane>

@@ -32,6 +32,8 @@ public class SearchResultController implements Initializable {
     public TextField searchField;
     public VBox list_root;
     public AnchorPane root;
+    public ScrollPane result_pane;
+    public Label failedlabel;
 
     private InfoModel userdata;
     private GoogleAPI api = Server.getInstance().getApi();
@@ -43,6 +45,7 @@ public class SearchResultController implements Initializable {
     }
     public void performSearch(String query) {
         try {
+
             now_search = executor.submit(() -> {
                 try {
                     Server.log("search for "+query);
@@ -50,6 +53,9 @@ public class SearchResultController implements Initializable {
                     // UI 更新需要在 JavaFX 线程中执行
                     Platform.runLater(() -> {
                         list_root.setVisible(false);
+                        result_pane.setVisible(false);
+                        failedlabel.setVisible(false);
+                        failedlabel.setManaged(false);
                         if (!list_root.getChildren().isEmpty()) {
                             list_root.getChildren().clear();
                         }
@@ -82,11 +88,18 @@ public class SearchResultController implements Initializable {
 
 
     public void show_result(List<Paper> papers){
+        result_pane.setVisible(true);
         var temp = list_root.getChildren();
         var list = papers.stream().map((paper)->{
             var elm = makeView.createListElement(paper);
             return elm;
         }).toList();
+        if(list.isEmpty()){
+            result_pane.setVisible(false);
+            failedlabel.setText("No papers containing \""+userdata.search_name+"\" were found.");
+            failedlabel.setVisible(true);
+            failedlabel.setManaged(true);
+        }
         temp.addAll(list);
     }
 

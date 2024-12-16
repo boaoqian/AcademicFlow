@@ -1,35 +1,88 @@
 package org.qba.academicflow;
 
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.transform.*;
+import javafx.stage.Stage;
 import org.qba.RSGraph.RelationshipGraph;
 import org.qba.RSGraph.Vertex;
 import org.qba.backend.api.GoogleAPI;
+import org.qba.backend.database.Utils;
 import org.qba.backend.paper.Paper;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import static javafx.scene.Cursor.H_RESIZE;
 import static org.qba.academicflow.Server.log;
 
 public class GraphController {
     @FXML
     public Pane root;
-    public VBox infoBar;
+    public HBox infoBar;
+    public VBox resultBar;
+    public Button backbt;
+    public Button savebt;
     private Pane graphPane;
+    public VBox setting;
+    public VBox dragArea;
+    public ImageView closebt;
+    public ImageView optbt;
+    public VBox menubar;
+
+    private Server.NodeEventBus eventBus;
+    private double dragStartX;
+    private double initialWidth;
+    boolean isDragging = false;
     private RelationshipGraph graph;
     private GoogleAPI api;
     private ExecutorService executor;
     private Paper search_paper;
+    private Map<Integer, Paper> paperMap = new HashMap<>();
     private int depth = 2;
-    private Future now_build;
+    private Future<?> now_build;
+
+
+
+
     @FXML
     private void initialize(){
+        eventBus = Server.NodeEventBus.getInstance();
+        menubar.setManaged(false);
+        menubar.setVisible(false);
         infoBar.setManaged(false);
+        infoBar.setVisible(false);
+        resultBar.setFillWidth(true);
+        // 获取InfoBar主体VBox的引用
+        dragArea.setCursor(H_RESIZE);
+        dragArea.setOnMousePressed(e -> {
+            dragStartX = e.getX();
+            isDragging = true;
+        });
+        dragArea.setOnMouseDragged(e -> {
+            if (isDragging) {
+                double deltaX = e.getX() - dragStartX;
+                double newWidth = infoBar.getWidth() - deltaX;
+                if (newWidth >= 200 && newWidth <= 800) {
+                    infoBar.setPrefWidth(newWidth);
+                }
+            }
+        });
+
+        dragArea.setOnMouseReleased(e -> isDragging = false);
         try{
             api = Server.getInstance().getApi();
             executor = Server.getInstance().getExecutor();
@@ -77,8 +130,29 @@ public class GraphController {
             graphPane.setTranslateX(event.getX() * (1 - newScaleX));
             graphPane.setTranslateY(event.getY() * (1 - newScaleY));
         });
+        eventBus.subscribe(event->{
+            if(event.getEventType()==Server.NodeEvent.PRESSED){
+                Platform.runLater(() -> {
+                    try {
+                        int paperId = event.getNodeid();
+                        Paper paper = paperMap.get(paperId);
+                        if (paper != null) {
+                            VBox box = makeView.createPaperInfoElementSimple(paper);
+                            resultBar.getChildren().clear();
+                            resultBar.getChildren().add(box);
+                            infoBar.setVisible(true);
+                            infoBar.setManaged(true);
+                            infoBar.toFront();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
         graph.startAnimation();
     }
+
     public void buildGraph(){
         now_build = executor.submit(new BuildGraph(graph, search_paper));
     }
@@ -102,6 +176,55 @@ public class GraphController {
         return scale;
     }
 
+    public void closeTab(MouseEvent mouseEvent) {
+        infoBar.setVisible(false);
+    }
+
+    public void optMenuOpen(MouseEvent mouseEvent) {
+        if (menubar.isVisible()) {
+            menubar.setVisible(false);
+            menubar.setManaged(false);
+        }
+        else {
+            menubar.setVisible(true);
+            menubar.setManaged(true);
+        }
+    }
+
+    public void backtomain(MouseEvent mouseEvent) {
+        try{
+            now_build.cancel(true);
+            Server.getInstance().restartApi();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("Main.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage)((Node)mouseEvent.getSource()).getScene().getWindow();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("Main.css").toExternalForm());
+            stage.setScene(scene);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void savegraph(MouseEvent mouseEvent) {
+        System.out.println("save graph");
+        if(!Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
+            try {
+                Files.createDirectories(Path.of("./PaperData/"));
+                Utils.CreateTable();
+            }catch (Exception e){
+                log("createDirectories failed");
+                e.printStackTrace();
+            }
+        }
+        try{
+            Utils.batchInsert(paperMap.values().stream().toList());
+        }catch (Exception e){
+            log("paper batchInsert failed");
+        }
+
+    }
+
     private class  BuildGraph implements Runnable {
         RelationshipGraph graph;
         Paper paper;
@@ -114,13 +237,14 @@ public class GraphController {
         @Override
         public void run() {
             log("set root node:"+paper.toString());
+            paperMap.clear();
             Platform.runLater(() -> graph.addRoot(new PaperVertex(paper)));
             Queue<Paper> search_paper_queue = new LinkedList<>();
             Queue<Paper> wait_paper_queue = new LinkedList<>();
             Queue<Integer> search_depth = new LinkedList<>();
             ArrayList<ArrayList<Future<ArrayList<Paper>>>> results = new ArrayList<>();
             Set<Integer> visited = new HashSet<>();
-            Map<Integer, Paper> paperMap = new HashMap<>();
+            paperMap.put(paper.get_uid(), paper);
             search_paper_queue.add(paper);
             search_depth.add(0);
             while (true) {
@@ -214,13 +338,13 @@ public class GraphController {
         public Double getsize() {
             int c = paper.getCited_count();
             if (c <= 10) {
-                return 15.0;
+                return 5.0;
             }
             else if (c <= 100) {
-                return 20.0;
+                return 10.0;
             }
             else{
-                return 25.0;
+                return 15.0;
             }
         }
     }
