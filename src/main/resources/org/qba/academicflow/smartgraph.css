@@ -68,7 +68,7 @@
 }
 
 .vertex.type2 {
-    -fx-fill: #2ecc71;
+    -fx-fill: #b6dcc4;
 }
 
 /* 可选：为不同状态的边设置不同样式 */
@@ -101,20 +101,20 @@
 }
 
 .paper-title {
-    -fx-font-family: "Noto Sans CJK SC Medium";
-    -fx-font-size: 24px;
+    -fx-font-family: "Noto Sans Mono CJK SC";
+    -fx-font-size: 26px;
     -fx-font-weight: bold;
     -fx-text-fill: #1f252c;
 }
 
 .paper-author {
-    -fx-font-family: "Noto Sans CJK SC Light";
-    -fx-font-size: 16px;
+    -fx-font-family: "Noto Sans Mono CJK SC";
+    -fx-font-size: 17px;
     -fx-text-fill: #242e3c;
 }
 
 .citation-count {
-    -fx-font-family: "Noto Sans CJK SC Light";
+    -fx-font-family: "Noto Sans Mono CJK SC";
     -fx-font-size: 17px;
     -fx-text-fill: #242e3c;
 }
@@ -124,7 +124,7 @@
 }
 
 .abstract-title {
-    -fx-font-family: "Noto Sans CJK SC Medium";
+    -fx-font-family: "Noto Sans Mono CJK SC";
     -fx-font-size: 18px;
     -fx-text-fill: #2c3e50;
 }
@@ -217,11 +217,11 @@
 }
 
 .optbt:hover {
-    -fx-background-color: #bcfafb; /* 悬停时的背景颜色 */
+    -fx-background-color: #adadad; /* 悬停时的背景颜色 */
 }
 
 .optbt:pressed {
-    -fx-background-color: #91bfbf; /* 按下时的背景颜色 */
+    -fx-background-color: #787878; /* 按下时的背景颜色 */
 }
 
 /* 添加平滑过渡效果 */

@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -10,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1"  fx:controller="org.qba.academicflow.MainController" fx:id="root">
+<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" style="-fx-background-color: white;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.qba.academicflow.MainController">
 
     <!-- Left Top Background Image -->
     <ImageView fitHeight="494.0" fitWidth="366.0" layoutX="-64.0" layoutY="-203.0" AnchorPane.leftAnchor="-64.0" AnchorPane.topAnchor="-203.0">
@@ -21,6 +22,7 @@
     <ImageView fitHeight="452.0" fitWidth="394.0" layoutX="903.0" layoutY="424.0" AnchorPane.bottomAnchor="-176.0" AnchorPane.rightAnchor="-52.858184814453125">
         <Image url="@bk.png" />
     </ImageView>
+
     <!-- Centering Container -->
     <VBox alignment="CENTER" spacing="20" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
 
@@ -31,15 +33,31 @@
             </ImageView>
         </HBox>
 
-        <!-- Search Field -->
-        <TextField fx:id="searchField" onKeyPressed="#EnterSearch" maxWidth="800.0" minWidth="200.0" prefHeight="50.0" prefWidth="800.0" style="-fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #dfe1e5; -fx-border-width: 1;">
-            <padding>
-                <Insets left="20.0" right="20.0" />
-            </padding>
-            <font>
-                <Font name="Noto Sans CJK SC Medium" size="33.0" />
-            </font>
-        </TextField>
+        <!-- Year Selection Container -->
+        <HBox alignment="CENTER" spacing="10">
+         <Button mnemonicParsing="false" prefHeight="28.0" prefWidth="54.0" text="Button" visible="false" />
+   
+           <!-- Search Field -->
+           <TextField fx:id="searchField" maxWidth="1000.0" minWidth="200.0" onKeyPressed="#EnterSearch" prefHeight="55.0" prefWidth="840.0" style="-fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #dfe1e5; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
+               <padding>
+                   <Insets left="20.0" right="20.0" />
+               </padding>
+               <font>
+                   <Font name="Noto Sans CJK SC Medium" size="33.0" />
+               </font>
+            <HBox.margin>
+               <Insets />
+            </HBox.margin>
+           </TextField>
+            <ComboBox fx:id="yearComboBox" prefHeight="59.0" prefWidth="110.0" promptText="Year">
+                <padding>
+                    <Insets left="10.0" right="10.0" />
+                </padding>
+            </ComboBox>
+         <VBox.margin>
+            <Insets left="60.0" right="60.0" />
+         </VBox.margin>
+        </HBox>
 
         <!-- Buttons Container -->
         <HBox alignment="CENTER" spacing="10">

@@ -49,9 +49,9 @@ public class SearchResultController implements Initializable {
             now_search = executor.submit(() -> {
                 try {
                     Server.log("search for "+query);
-
                     // UI 更新需要在 JavaFX 线程中执行
                     Platform.runLater(() -> {
+                        searchField.setText(query);
                         list_root.setVisible(false);
                         result_pane.setVisible(false);
                         failedlabel.setVisible(false);
@@ -64,7 +64,7 @@ public class SearchResultController implements Initializable {
                     });
 
                     // 在后台线程执行搜索
-                    userdata.papers = api.GetByName(query);
+                    userdata.papers = api.GetByName(query,userdata.search_year);
 
                     // 搜索完成后的 UI 更新也需要在 JavaFX 线程中执行
                     Platform.runLater(() -> {

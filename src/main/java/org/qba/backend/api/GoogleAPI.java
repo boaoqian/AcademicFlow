@@ -82,7 +82,7 @@ public class GoogleAPI {
         return proxy_host + ":" + proxy_port;
     }
 
-    public String constructURL(String url, String title, String lang, int start) {
+    public String constructURL(String url, String title, String lang, int start, int as_ylo) {
         url = url.replace(" ", "+");
         String result;
         if (start == 0) {
@@ -90,15 +90,23 @@ public class GoogleAPI {
         } else {
             result = "%s?start=%d&hl=%s&q=%s".formatted(url, start, lang, title.replace(" ", "+"));
         }
+        if (as_ylo > 0) {
+            result += "&as_ylo=" + as_ylo;
+        }
+        System.out.println(result);
         return result;
     }
 
     public String constructURL(String url, String title, String lang) {
-        return constructURL(url, title, lang, 0);
+        return constructURL(url, title, lang, 0,-1);
     }
 
     public String constructURL(String title) {
-        return constructURL(this.now_url, title, "zh-CN", 0);
+        return constructURL(this.now_url, title, "zh-CN", 0, -1);
+    }
+
+    public String constructURL(String title, int start, int as_ylo) {
+        return constructURL(this.now_url, title, "zh-CN", start, as_ylo);
     }
 
     public String constructURL(String url, int start) {
@@ -211,7 +219,7 @@ public class GoogleAPI {
         return papers;
     }
 
-    public ArrayList<Paper> GetByName(String name, int max_items) {
+    public ArrayList<Paper> GetByName(String name, int max_items, int year) {
         ArrayList<Paper> papers = new ArrayList<>();
         List<Future<Connection.Response>> futures = new ArrayList<>();
         if (name.length() <= 2) {
@@ -219,7 +227,7 @@ public class GoogleAPI {
         }
         int max_size = max_items;
         try {
-            String url = constructURL(name);
+            String url = constructURL(name,0,year);
             Document doc;
             Connection.Response response = get(url);
             doc = response.parse();
@@ -227,7 +235,7 @@ public class GoogleAPI {
             papers.addAll(ParsePapers(doc));
             if (max_size > 10) {
                 for (int i = 10; i <= max_size; i += 10) {
-                    String qurl = constructURL(url, i);
+                    String qurl = constructURL(url, i, year);
                     futures.add(threadPool.submit(() -> get(qurl)));
                 }
                 for (Future<Connection.Response> future : futures) {
@@ -245,7 +253,10 @@ public class GoogleAPI {
     }
 
     public ArrayList<Paper> GetByName(String name) throws IOException {
-        return GetByName(name, 10);
+        return GetByName(name, 10, -1);
+    }
+    public ArrayList<Paper> GetByName(String name, int year) throws IOException {
+        return GetByName(name, 10, year);
     }
 
     public ArrayList<Paper> GetRelation(String url, int max_items) {

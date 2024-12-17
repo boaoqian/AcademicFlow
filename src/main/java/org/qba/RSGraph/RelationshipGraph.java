@@ -27,8 +27,8 @@ public class RelationshipGraph {
     private final DoubleBinding centerXBinding ;
     private final DoubleBinding centerYBinding ;
     private double centerF_r = 0.05;
-    private double edgeL = 150;
-    private double nodeF = 1000000;
+    private double edgeL = 100;
+    private double nodeF = 800000;
     // 使用时间戳控制
     private long lastUpdate = 0;
     private final long FRAME_INTERVAL = 1_000_000_000L / 60; // 60 FPS (1秒=1_000_000_000纳秒)
@@ -384,7 +384,7 @@ public class RelationshipGraph {
                 dy+=random.nextDouble()*10;
                 dx+=random.nextDouble()*10;
             }
-            double force = (distance - edgeL) ;
+            double force = (distance - edgeL);
             dx *= force / distance;
             dy *= force / distance;
 
