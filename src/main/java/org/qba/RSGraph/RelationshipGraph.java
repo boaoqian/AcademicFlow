@@ -28,7 +28,7 @@ public class RelationshipGraph {
     private final DoubleBinding centerYBinding ;
     private double centerF_r = 0.05;
     private double edgeL = 100;
-    private double nodeF = 800000;
+    private double nodeF = 500000;
     // 使用时间戳控制
     private long lastUpdate = 0;
     private final long FRAME_INTERVAL = 1_000_000_000L / 60; // 60 FPS (1秒=1_000_000_000纳秒)
@@ -208,7 +208,7 @@ public class RelationshipGraph {
         root.getChildren().addAll(node.circle,node.text);
     }
     public void addNode(Vertex vertex) {
-        if (nodes.get(vertex.getId())!=null) {
+        if (nodes.containsKey(vertex.getId())) {
             return;
         }
 //        stopAnimation();
@@ -273,7 +273,7 @@ public class RelationshipGraph {
 
         @Override
         public int hashCode() {
-            return Objects.hash(source, target);
+            return Objects.hash(source)+Objects.hash(target);
         }
 
         GraphEdge(GraphNode source, GraphNode target) {

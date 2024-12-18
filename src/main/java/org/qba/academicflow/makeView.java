@@ -163,4 +163,12 @@ public class makeView {
 
         return vbox;
     }
+    public static void fadeOutLabel(Label label) {
+        FadeTransition fadeTransition = new FadeTransition();
+        fadeTransition.setDuration(Duration.millis(1000)); // 持续1秒
+        fadeTransition.setNode(label);
+        fadeTransition.setFromValue(1.0);    // 开始时完全不透明
+        fadeTransition.setToValue(0.0);      // 结束时完全透明
+        fadeTransition.play();
+    }
 }

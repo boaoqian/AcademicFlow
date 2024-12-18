@@ -121,8 +121,6 @@ public class Utils {
                     pstmt.setInt(11, paper.getCited_count());
                     // 添加到批处理
                     pstmt.addBatch();
-
-                    // 每1000条执行一次
                     if (papers.indexOf(paper) % 500 == 0) {
                         pstmt.executeBatch();
                     }
@@ -138,20 +136,53 @@ public class Utils {
                 // 发生错误时回滚
                 conn.rollback();
                 System.out.println("批量插入错误：" + e.getMessage());
+                e.printStackTrace();
                 throw e;
             }
         }
     }
 
 
-    public static Paper getPaper(int uid) throws SQLException {
+    public static Paper getPaper(int uid) {
         String sql = "SELECT * FROM paperinfo WHERE uid = ?";
         try (Connection conn = DriverManager.getConnection(db_url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, uid);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return createPaperFromRS(rs);
+            pstmt.setInt(1, uid); // 先设置参数
+            try (ResultSet rs = pstmt.executeQuery()) { // 然后执行查询
+                return createPaperFromRS(rs); // 这里的 rs 是有效的
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    // 批量查询方案（推荐）
+    public static List<Paper> getPapers(List<Integer> uids) {
+        String sql = "SELECT * FROM paperinfo WHERE uid IN " +
+                "(?" + ",?".repeat(uids.size() - 1) + ")";
+
+        try (Connection conn = DriverManager.getConnection(db_url);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // 设置所有参数
+            for (int i = 0; i < uids.size(); i++) {
+                pstmt.setInt(i + 1, uids.get(i));
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                List<Paper> papers = new ArrayList<>();
+                while (rs.next()) {
+                    papers.add(createPaperFromRS(rs));
+                }
+                return papers;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return Collections.emptyList();
         }
     }
 
@@ -195,7 +226,7 @@ public class Utils {
                         searchQueue.offer(citedPaper);
                         depthQueue.offer(currentDepth + 1);
                     }
-                } catch (SQLException | NumberFormatException e) {
+                } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
             }

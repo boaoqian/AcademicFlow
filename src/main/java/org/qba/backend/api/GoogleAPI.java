@@ -93,7 +93,6 @@ public class GoogleAPI {
         if (as_ylo > 0) {
             result += "&as_ylo=" + as_ylo;
         }
-        System.out.println(result);
         return result;
     }
 

@@ -16,7 +16,6 @@
 }
 /* ComboBox美化样式 */
 .combo-box {
-    -fx-background-color: white;
     -fx-background-radius: 15px;
     -fx-border-radius: 20px;
     -fx-border-color: #e0e0e0;
@@ -31,16 +30,12 @@
     -fx-background-color: white;
 }
 
-.combo-box .list-cell .text {
-    -fx-fill: #333333;
-}
 
 .combo-box .list-cell:hover {
     -fx-background-color: #f0f0f0;
 }
 
 .combo-box .list-view {
-    -fx-background-color: white;
     -fx-background-radius: 10px;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
 }

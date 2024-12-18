@@ -125,7 +125,7 @@ public class Paper {
     }
 
     public int get_uid(){
-        return Objects.hash(title)*31+Objects.hash(pdf_url);
+        return Objects.hash(title)*31+Objects.hash(authorInfo);
     }
 
     public boolean isComplated() {

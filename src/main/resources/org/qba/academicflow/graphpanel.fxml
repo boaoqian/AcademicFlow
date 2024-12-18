@@ -3,19 +3,31 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.qba.academicflow.GraphController">
+<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.qba.academicflow.GraphController">
    <children>
+      <ImageView accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#openTab" pickOnBounds="true" scaleX="-1.0" smooth="false" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="10.0">
+         <image>
+            <Image url="@closebt.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="OPEN_HAND" />
+         </cursor>
+      </ImageView>
       <HBox fx:id="infoBar" viewOrder="-1" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <!-- 拖拽区域 - 放在HBox的开始位置 -->
          <VBox fx:id="dragArea" alignment="TOP_RIGHT" maxWidth="4" minWidth="4" prefWidth="4" styleClass="drag-area" viewOrder="-1">
-            <ImageView fx:id="closebt" accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#closeTab" pickOnBounds="true" smooth="false">
+            <ImageView accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#closeTab" pickOnBounds="true" smooth="false">
                <image>
                   <Image url="@closebt.png" />
                </image>
@@ -27,12 +39,12 @@
          </VBox>
 
          <!-- InfoBar主体 -->
-         <VBox alignment="TOP_CENTER" prefWidth="200.0" styleClass="info-bar" HBox.hgrow="ALWAYS">
+         <VBox alignment="TOP_CENTER" prefWidth="300.0" styleClass="info-bar" HBox.hgrow="ALWAYS">
             <padding>
                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
             <children>
-               <VBox fx:id="resultBar" alignment="TOP_CENTER" maxWidth="800" styleClass="result-bar" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+               <VBox fx:id="resultBar" alignment="TOP_CENTER" maxWidth="800"  HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                   <padding>
                      <Insets bottom="5" left="5" right="5" top="5" />
                   </padding>
@@ -41,6 +53,58 @@
                   <padding>
                      <Insets bottom="5" left="5" right="5" top="5" />
                   </padding>
+                  <children>
+                     <Label alignment="CENTER" text="Filter Setting">
+                        <font>
+                           <Font size="19.0" />
+                        </font>
+                     </Label>
+                     <HBox alignment="CENTER_LEFT" prefHeight="63.0" prefWidth="166.0">
+                        <children>
+                           <Label prefHeight="26.0" prefWidth="109.0" text="Year start:">
+                              <font>
+                                 <Font size="16.0" />
+                              </font>
+                           </Label>
+                           <ComboBox fx:id="styear" prefHeight="35.0" prefWidth="141.0" />
+                        </children>
+                        <padding>
+                           <Insets left="10.0" />
+                        </padding>
+                     </HBox>
+                     <HBox alignment="CENTER_LEFT" prefHeight="63.0" prefWidth="166.0">
+                        <children>
+                           <Label prefHeight="26.0" prefWidth="109.0" text="Year end:">
+                              <font>
+                                 <Font size="16.0" />
+                              </font>
+                           </Label>
+                           <ComboBox fx:id="endyear" prefHeight="35.0" prefWidth="141.0" />
+                        </children>
+                        <padding>
+                           <Insets left="10.0" />
+                        </padding>
+                     </HBox>
+                     <HBox alignment="CENTER_LEFT" prefHeight="63.0" prefWidth="166.0">
+                        <children>
+                           <Label prefHeight="26.0" prefWidth="103.0" text="Text:">
+                              <font>
+                                 <Font size="16.0" />
+                              </font>
+                           </Label>
+                           <TextField fx:id="titlefilter" prefHeight="33.0" prefWidth="145.0" style="-fx-background-color: #ffffff; -fx-border-color: #dddddd; -fx-border-width: 1;" HBox.hgrow="ALWAYS" />
+                        </children>
+                        <padding>
+                           <Insets left="10.0" right="10.0" />
+                        </padding>
+                     </HBox>
+                     <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
+                     <Button mnemonicParsing="false" onMouseClicked="#apply_filter" prefHeight="47.0" prefWidth="108.0" styleClass="optbt" text="Apply">
+                        <font>
+                           <Font size="19.0" />
+                        </font>
+                     </Button>
+                  </children>
                </VBox>
             </children>
          </VBox>
@@ -55,9 +119,14 @@
       </ImageView>
       <VBox fx:id="menubar" layoutX="14.0" layoutY="45.0" prefHeight="71.0" prefWidth="118.0" style="-fx-border-width: 1; -fx-border-radius: 5; -fx-border-color: #1971c2;" viewOrder="-1" AnchorPane.leftAnchor="14.0" AnchorPane.topAnchor="45.0">
          <children>
-            <Button fx:id="backbt" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" onMouseClicked="#backtomain" prefHeight="0.0" prefWidth="267.0" styleClass="optbt" text="back" textAlignment="CENTER" VBox.vgrow="ALWAYS" />
+            <Button alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" onMouseClicked="#backtomain" prefHeight="0.0" prefWidth="267.0" styleClass="optbt" text="back" textAlignment="CENTER" VBox.vgrow="ALWAYS" />
             <Button fx:id="savebt" alignment="TOP_CENTER" contentDisplay="CENTER" mnemonicParsing="false" onMouseClicked="#savegraph" prefHeight="13.0" prefWidth="208.0" styleClass="optbt" text="save graph" textAlignment="CENTER" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
+      <Label fx:id="save_label" contentDisplay="CENTER" layoutX="12.0" layoutY="45.0" prefHeight="45.0" prefWidth="346.0" text="Save Succeed!" viewOrder="-2">
+         <font>
+            <Font name="Noto Sans CJK SC" size="21.0" />
+         </font>
+      </Label>
    </children>
 </AnchorPane>

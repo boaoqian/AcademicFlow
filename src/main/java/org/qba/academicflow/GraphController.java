@@ -7,6 +7,9 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -21,10 +24,12 @@ import org.qba.backend.paper.Paper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static javafx.scene.Cursor.H_RESIZE;
 import static org.qba.academicflow.Server.log;
@@ -34,15 +39,18 @@ public class GraphController {
     public Pane root;
     public HBox infoBar;
     public VBox resultBar;
-    public Button backbt;
-    public Button savebt;
-    private Pane graphPane;
+    public Label save_label;
+    public ComboBox<Integer> styear;
     public VBox setting;
     public VBox dragArea;
-    public ImageView closebt;
     public ImageView optbt;
     public VBox menubar;
+    public ComboBox<Integer> endyear;
+    public TextField titlefilter;
+    public Button savebt;
 
+    private Pane graphPane;
+    
     private Server.NodeEventBus eventBus;
     private double dragStartX;
     private double initialWidth;
@@ -60,7 +68,72 @@ public class GraphController {
 
     @FXML
     private void initialize(){
-        eventBus = Server.NodeEventBus.getInstance();
+        init_info_bar();
+        try{
+            api = Server.getInstance().getApi();
+            executor = Server.getInstance().getExecutor();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        init_graph_pane();
+        init_event_bus();
+        init_filter_bar();
+    }
+    private void init_year_selecter(ComboBox<Integer> seleter,List<Integer> range){
+        seleter.getItems().clear();
+        seleter.getItems().addAll(range);
+    }
+    private void init_filter_bar(){
+        int year = LocalDate.now().getYear();
+        List<Integer> range = new ArrayList<>();
+        for(int i = year;i>1900;){
+            if(i>2000){
+                range.add(i);
+                i--;
+            } else{
+                range.add(i);
+                i-=10;
+            }
+        }
+        init_year_selecter(styear,range);
+        init_year_selecter(endyear,range);
+        styear.setOnAction(event -> {
+            System.out.println("change");
+            if(endyear.getSelectionModel().getSelectedItem()==null){
+                range.clear();
+                for(int i = year;i>styear.getSelectionModel().getSelectedItem();){
+                    if(i>2000){
+                        range.add(i);
+                        i--;
+                    } else{
+                        range.add(i);
+                        i-=10;
+                    }
+                }
+                endyear.getItems().clear();
+                endyear.getItems().addAll(range);
+            }
+        });
+        endyear.setOnAction(event -> {
+            System.out.println("change");
+            if(styear.getSelectionModel().getSelectedItem()==null){
+                range.clear();
+                for(int i = endyear.getSelectionModel().getSelectedItem();i>1900;){
+                    if(i>2000){
+                        range.add(i);
+                        i--;
+                    } else{
+                        range.add(i);
+                        i-=10;
+                    }
+                }
+                styear.getItems().clear();
+                styear.getItems().addAll(range);
+            }
+        });
+    }
+    private void init_info_bar(){
+        save_label.setVisible(false);
         menubar.setManaged(false);
         menubar.setVisible(false);
         infoBar.setManaged(false);
@@ -83,21 +156,41 @@ public class GraphController {
         });
 
         dragArea.setOnMouseReleased(e -> isDragging = false);
-        try{
-            api = Server.getInstance().getApi();
-            executor = Server.getInstance().getExecutor();
-            this.graph = new RelationshipGraph();
-            graphPane = graph.getRoot();
-            graphPane.setManaged(true);
-            root.getChildren().add(graphPane);
-            graph.startAnimation();
-            AnchorPane.setTopAnchor(graphPane, 0.0);
-            AnchorPane.setBottomAnchor(graphPane, 0.0);
-            AnchorPane.setLeftAnchor(graphPane, 0.0);
-            AnchorPane.setRightAnchor(graphPane, 0.0);
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+    }
+    private void init_event_bus(){
+        eventBus = Server.NodeEventBus.getInstance();
+        eventBus.subscribe(event->{
+            if(event.getEventType()==Server.NodeEvent.PRESSED){
+                Platform.runLater(() -> {
+                    try {
+                        int paperId = event.getNodeid();
+                        Paper paper = paperMap.get(paperId);
+                        if (paper != null) {
+                            VBox box = makeView.createPaperInfoElementSimple(paper);
+                            resultBar.getChildren().clear();
+                            resultBar.getChildren().add(box);
+                            infoBar.setVisible(true);
+                            infoBar.setManaged(true);
+                            infoBar.toFront();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
+    }
+
+    private void init_graph_pane(){
+        this.graph = new RelationshipGraph();
+        graphPane = graph.getRoot();
+        graphPane.setManaged(true);
+        root.getChildren().add(graphPane);
+        graph.startAnimation();
+        AnchorPane.setTopAnchor(graphPane, 0.0);
+        AnchorPane.setBottomAnchor(graphPane, 0.0);
+        AnchorPane.setLeftAnchor(graphPane, 0.0);
+        AnchorPane.setRightAnchor(graphPane, 0.0);
         // 添加鼠标滚轮缩放事件
         graphPane.setOnScroll(event -> {
             // 获取滚轮滚动的增量
@@ -129,28 +222,8 @@ public class GraphController {
             // 这有助于实现以鼠标为中心的缩放
             graphPane.setTranslateX(event.getX() * (1 - newScaleX));
             graphPane.setTranslateY(event.getY() * (1 - newScaleY));
+            graph.startAnimation();
         });
-        eventBus.subscribe(event->{
-            if(event.getEventType()==Server.NodeEvent.PRESSED){
-                Platform.runLater(() -> {
-                    try {
-                        int paperId = event.getNodeid();
-                        Paper paper = paperMap.get(paperId);
-                        if (paper != null) {
-                            VBox box = makeView.createPaperInfoElementSimple(paper);
-                            resultBar.getChildren().clear();
-                            resultBar.getChildren().add(box);
-                            infoBar.setVisible(true);
-                            infoBar.setManaged(true);
-                            infoBar.toFront();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
-            }
-        });
-        graph.startAnimation();
     }
 
     public void buildGraph(){
@@ -208,34 +281,59 @@ public class GraphController {
 
     public void savegraph(MouseEvent mouseEvent) {
         System.out.println("save graph");
-        if(!Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
-            try {
-                Files.createDirectories(Path.of("./PaperData/"));
-                Utils.CreateTable();
-            }catch (Exception e){
-                log("createDirectories failed");
-                e.printStackTrace();
+        setting.setManaged(false);
+        setting.setVisible(false);
+        executor.submit(()->{
+            if(!Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
+                try {
+                    Files.createDirectories(Path.of("./PaperData/"));
+                    Utils.CreateTable();
+                }catch (Exception e){
+                    log("createDirectories failed");
+                    e.printStackTrace();
+                }
             }
-        }
-        try{
-            Utils.batchInsert(paperMap.values().stream().toList());
-        }catch (Exception e){
-            log("paper batchInsert failed");
-        }
+            Platform.runLater(()-> savebt.setDisable(true));
+            try{
+                Utils.batchInsert(paperMap.values().stream().toList());
+                Platform.runLater(()->{
+                    save_label.setVisible(true);
+                    save_label.setText("paper saved successfully");
+                    makeView.fadeOutLabel(save_label);});
+            }catch (Exception e){
+                log("paper batchInsert failed");
+                Platform.runLater(()-> {
+                    save_label.setVisible(true);
+                    save_label.setText("paper batchInsert failed");
+                    makeView.fadeOutLabel(save_label);});
+            }
+            Platform.runLater(()->savebt.setDisable(false));});
+    }
 
+    public void openTab(MouseEvent mouseEvent) {
+        infoBar.setVisible(true);
+        infoBar.setManaged(true);
+    }
+
+    public void apply_filter(MouseEvent mouseEvent) {
+        log("apply filter");
     }
 
     private class  BuildGraph implements Runnable {
         RelationshipGraph graph;
         Paper paper;
+        Boolean cache = false;
 
         BuildGraph(RelationshipGraph graph, Paper paper) {
+            cache = Files.exists(Path.of("./PaperData/paperinfo.sqlite"));
+            log("cache exists");
             this.graph = graph;
             this.paper = paper;
         }
 
         @Override
         public void run() {
+            savebt.setDisable(cache);
             log("set root node:"+paper.toString());
             paperMap.clear();
             Platform.runLater(() -> graph.addRoot(new PaperVertex(paper)));
@@ -266,21 +364,7 @@ public class GraphController {
                             temp.stream().filter(pp -> !visited.contains(pp.get_uid())).forEach(pp -> paperMap.put(pp.get_uid(), pp));
                             temp = Paper.filter(temp, new Paper.CitedFilter()).toList();
                             log("add nodes for "+paper.get_uid());
-                            if(d==1){
-                                if (temp.size() > 10) {
-                                    temp = Paper.filter(temp, new Paper.CitedCountFilter(10)).toList();
-                                }
-                            }
-                            else if(d==2){
-                                if (temp.size() > 3) {
-                                    temp = Paper.filter(temp, new Paper.CitedCountFilter(3)).toList();
-                                }
-                            }
-                            else if(d>=3){
-                                if (temp.size() > 1) {
-                                    temp = Paper.filter(temp, new Paper.CitedCountFilter(1)).toList();
-                                }
-                            }
+                            temp = depthFilte(temp,d);
                             List<Paper> finalTemp = temp;
                             Platform.runLater(() -> {
                                 graph.addNodes(finalTemp.stream().map(PaperVertex::new).toList());
@@ -307,6 +391,32 @@ public class GraphController {
                     continue;
                 }
                 visited.add(p.get_uid());
+                if(cache){
+                    Paper t;
+                    try{
+                        log(""+p.get_uid());
+                        t = Utils.getPaper(p.get_uid());
+                        if(t!=null&&t.getCited_uid()!=null&&!t.getCited_uid().isEmpty()){
+                            log("use cache");
+                            log(t.getCited_uid());
+                            Stream<Integer> uids = Arrays.stream(t.getCited_uid().split(",")).map(Integer::valueOf);
+                            List<Paper> temp = Utils.getPapers(uids.toList());
+                            temp = depthFilte(temp,d+1);
+                            List<Paper> finalTemp = temp;
+                            Platform.runLater(() -> {
+                                graph.addNodes(finalTemp.stream().map(PaperVertex::new).toList());
+                                graph.addEdges(p.get_uid(), finalTemp.stream().map(Paper::get_uid).toList());
+                            });
+                            temp.forEach(pp -> {
+                                search_depth.offer(d+1);
+                                search_paper_queue.offer(pp);
+                            });
+                            continue;
+                        }
+                    }catch (Exception e){
+                        log(e.getMessage());
+                    }
+                }
                 if(d<=2){
                     results.add(api.GetFutureFromCited(p.getCited_url(), 20));
                 }else {
@@ -314,7 +424,26 @@ public class GraphController {
                 }
                 search_depth.add(d + 1);
             }
+            savebt.setDisable(false);
         }
+    }
+    private List<Paper> depthFilte(List<Paper> temp, int d) {
+        if(d==1){
+            if (temp.size() > 10) {
+                temp = Paper.filter(temp, new Paper.CitedCountFilter(10)).toList();
+            }
+        }
+        else if(d==2){
+            if (temp.size() > 3) {
+                temp = Paper.filter(temp, new Paper.CitedCountFilter(3)).toList();
+            }
+        }
+        else if(d>=3){
+            if (temp.size() > 1) {
+                temp = Paper.filter(temp, new Paper.CitedCountFilter(1)).toList();
+            }
+        }
+        return temp;
     }
     private static class PaperVertex extends Vertex {
         Paper paper;
@@ -348,5 +477,4 @@ public class GraphController {
             }
         }
     }
-
 }
