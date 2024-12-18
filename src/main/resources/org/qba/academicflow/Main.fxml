@@ -121,11 +121,15 @@
             </padding>
          </HBox>
          <Separator prefWidth="200.0" />
-         <Button fx:id="savechange" onAction="#savechange" prefHeight="60.0" prefWidth="189.0" style="-fx-background-color: #f8f9fa; -fx-border-color: transparent; -fx-background-radius: 20; -fx-padding: 8 16;" styleClass="animated-button" text="Save Change" textAlignment="CENTER">
-            <font>
-               <Font name="Noto Sans CJK SC Medium" size="18.0" />
-            </font>
-         </Button>
+         <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+            <children>
+               <Button fx:id="savechange" onAction="#savechange" prefHeight="60.0" prefWidth="189.0" style="-fx-background-color: #f8f9fa; -fx-border-color: transparent; -fx-background-radius: 20; -fx-padding: 8 16;" styleClass="animated-button" text="Save Change" textAlignment="CENTER">
+                  <font>
+                     <Font name="Noto Sans CJK SC Medium" size="18.0" />
+                  </font>
+               </Button>
+            </children>
+         </HBox>
       </children>
       <padding>
          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

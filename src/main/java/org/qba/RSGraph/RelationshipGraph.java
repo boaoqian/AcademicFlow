@@ -199,6 +199,27 @@ public class RelationshipGraph {
             this(vertex,centerXBinding.get(),centerYBinding.get(),is_root);
         }
     }
+    public void reset_style(){
+        if(!nodes.isEmpty()){
+            nodes.values().forEach(node -> {
+                node.circle.setOpacity(1);
+                node.text.setOpacity(1);
+                node.circle.getStyleClass().remove("select");
+            });
+        }
+    }
+    public void filted_vertex(Set<Integer> uids){
+
+        if(!nodes.isEmpty()){
+            nodes.keySet().stream().filter(uid->!uids.contains(uid)).forEach(uid -> {
+                nodes.get(uid).circle.setOpacity(0.3);
+                nodes.get(uid).text.setOpacity(0.3);});
+            nodes.keySet().stream().filter(uids::contains).forEach(uid->{
+                nodes.get(uid).circle.getStyleClass().add("select");
+            });
+        }
+
+    }
     public void addRoot(Vertex vertex) {
         if (nodes.get(vertex.getId())!=null) {
             return;

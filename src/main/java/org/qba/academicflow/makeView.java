@@ -12,6 +12,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -165,7 +166,7 @@ public class makeView {
     }
     public static void fadeOutLabel(Label label) {
         FadeTransition fadeTransition = new FadeTransition();
-        fadeTransition.setDuration(Duration.millis(1000)); // 持续1秒
+        fadeTransition.setDuration(Duration.millis(2000)); // 持续1秒
         fadeTransition.setNode(label);
         fadeTransition.setFromValue(1.0);    // 开始时完全不透明
         fadeTransition.setToValue(0.0);      // 结束时完全透明

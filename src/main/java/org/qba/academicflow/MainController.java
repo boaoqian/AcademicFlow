@@ -124,7 +124,7 @@ public class MainController {
     }
 
     public void clean_database(ActionEvent actionEvent) {
-        if(Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
+        if(!Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
             return;
         }else {
             try{
@@ -136,7 +136,6 @@ public class MainController {
     }
 
     public void savechange(ActionEvent actionEvent) {
-        userdata.search_year = yearComboBox.getSelectionModel().getSelectedItem();
         if ((yearComboBox.getSelectionModel().getSelectedItem()!=null))
         {
             userdata.search_year = yearComboBox.getSelectionModel().getSelectedItem();

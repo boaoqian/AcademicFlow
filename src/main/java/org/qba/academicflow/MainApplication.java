@@ -5,6 +5,7 @@ import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import java.io.IOException;
 
@@ -21,6 +22,7 @@ public class MainApplication extends Application {
         scene.setUserAgentStylesheet(String.valueOf(MainApplication.class.getResource("Main.css")));
         stage.setTitle("AcademicFlow");
         stage.setScene(scene);
+        stage.getIcons().add(new Image(String.valueOf(MainApplication.class.getResource("work flow.png"))));
         stage.show();
     }
     public static HostServices getAppHostServices() {

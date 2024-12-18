@@ -97,50 +97,61 @@ public class Utils {
         }
     }
     public static void batchInsert(List<Paper> papers) throws SQLException {
-        // 使用单个连接
-        try (Connection conn = DriverManager.getConnection(db_url)) {
-            // 关闭自动提交
-            conn.setAutoCommit(false);
+        int maxRetries = 5; // 最大重试次数
+        int retryCount = 0;
 
-            try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
-                // 批量处理
-                for (Paper paper : papers) {
-                    if (checkPaperExists(paper.get_uid())) {
-                        delete(paper.get_uid());
+        while (retryCount < maxRetries) {
+            try (Connection conn = DriverManager.getConnection(db_url)) {
+                conn.setAutoCommit(false);
+                try (PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+                    int count = 0;
+
+                    for (Paper paper : papers) {
+                        if (checkPaperExists(paper.get_uid())) {
+                            delete(paper.get_uid(),conn);
+                        }
+                        pstmt.setInt(1, paper.get_uid());
+                        pstmt.setString(2, paper.getTitle());
+                        pstmt.setInt(3, paper.getYear());
+                        pstmt.setString(4, paper.getAuthor());
+                        pstmt.setString(5, paper.getAbstract());
+                        pstmt.setString(6, paper.getCited_uid());
+                        pstmt.setString(7, paper.getRelation_uid());
+                        pstmt.setString(8, paper.getPdf_url());
+                        pstmt.setString(9, paper.getRelation_url());
+                        pstmt.setString(10, paper.getCited_url());
+                        pstmt.setInt(11, paper.getCited_count());
+                        pstmt.addBatch();
+                        count++;
+
+                        if (count % 100 == 0) { // 每100条执行一次
+                            pstmt.executeBatch();
+                        }
                     }
-                    pstmt.setInt(1, paper.get_uid());
-                    pstmt.setString(2, paper.getTitle());
-                    pstmt.setInt(3, paper.getYear());
-                    pstmt.setString(4, paper.getAuthor());
-                    pstmt.setString(5, paper.getAbstract());
-                    pstmt.setString(6, paper.getCited_uid());
-                    pstmt.setString(7, paper.getRelation_uid());
-                    pstmt.setString(8, paper.getPdf_url());
-                    pstmt.setString(9, paper.getRelation_url());
-                    pstmt.setString(10, paper.getCited_url());
-                    pstmt.setInt(11, paper.getCited_count());
-                    // 添加到批处理
-                    pstmt.addBatch();
-                    if (papers.indexOf(paper) % 500 == 0) {
-                        pstmt.executeBatch();
+
+                    pstmt.executeBatch();
+                    conn.commit();
+                    return; // 成功后退出方法
+
+                } catch (SQLException e) {
+                    conn.rollback();
+                    System.out.println("批量插入错误：" + e.getMessage());
+                    if (e.getMessage().contains("database is locked")) {
+                        retryCount++;
+                        Thread.sleep(100); // 等待100毫秒后重试
+                    } else {
+                        throw e; // 其他错误直接抛出
                     }
                 }
-
-                // 执行剩余的批处理
-                pstmt.executeBatch();
-
-                // 提交事务
-                conn.commit();
-
-            } catch (SQLException e) {
-                // 发生错误时回滚
-                conn.rollback();
-                System.out.println("批量插入错误：" + e.getMessage());
-                e.printStackTrace();
-                throw e;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // 恢复中断状态
+                throw new SQLException("插入过程中被中断", e);
             }
         }
+        throw new SQLException("达到最大重试次数，数据库仍然被锁定");
     }
+
+
 
 
     public static Paper getPaper(int uid) {
@@ -270,6 +281,15 @@ public class Utils {
         PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, uid);
             int affectedRows = pstmt.executeUpdate();
+        }
+    }
+    public static void delete(int uid, Connection conn){
+        String sql = "DELETE FROM paperinfo WHERE uid = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, uid);
+            int affectedRows = pstmt.executeUpdate();
+        }catch (SQLException e) {
+            e.printStackTrace();
         }
     }
     public static void clean() throws SQLException {

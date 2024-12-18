@@ -51,26 +51,20 @@
     -fx-scale-x: 1.1;  /* 悬停时略微放大 */
     -fx-scale-y: 1.1;
 }
-/* 选中状态的顶点样式 */
-.vertex:selected {
-    -fx-fill: #52a4d5;  /* 选中时的填充色 */
-    -fx-stroke: #003c61;  /* 选中时的边框色 */
-    -fx-text-fill: white;  /* 选中时的文本颜色 */
-    -fx-stroke-width: 2;  /* 边框宽度 */
-}
 
 /* 可选：为不同类型的顶点设置不同样式 */
-.vertex.link {
+.vertex.link{
     -fx-fill: #8aeb8c;
     -fx-stroke: #2c3e50;  /* 边框颜色 */
     -fx-stroke-width: 2;  /* 边框宽度 */
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 0);  /* 阴影效果 */
 }
-
-.vertex.type2 {
-    -fx-fill: #b6dcc4;
+.vertex.select{
+    -fx-fill: #8aeb8c;
+    -fx-stroke: #2c3e50;  /* 边框颜色 */
+    -fx-stroke-width: 2;  /* 边框宽度 */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 0);  /* 阴影效果 */
 }
-
 /* 可选：为不同状态的边设置不同样式 */
 .edge.highlighted {
     -fx-stroke: #e74c3c;
@@ -124,14 +118,14 @@
 }
 
 .abstract-title {
-    -fx-font-family: "Noto Sans Mono CJK SC";
+    -fx-font-family: "Noto Sans Mono CJK SC Light";
     -fx-font-size: 18px;
     -fx-text-fill: #2c3e50;
 }
 
 .abstract-text {
     -fx-font-family: "Noto Sans Mono CJK SC";
-    -fx-font-size: 14px;
+    -fx-font-size: 18px;
     -fx-text-fill: #34495e;
     -fx-line-spacing: 1.5;
 }
@@ -207,6 +201,7 @@
 }
 
 .optbt {
+    -fx-font-family: "Noto Sans Mono CJK SC";
     -fx-background-color: #ffffff; /* 背景颜色 */
     -fx-text-fill: #000000; /* 文字颜色 */
     -fx-font-size: 14px; /* 字体大小 */

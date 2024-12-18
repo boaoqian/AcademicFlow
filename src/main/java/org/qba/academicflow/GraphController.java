@@ -41,13 +41,14 @@ public class GraphController {
     public VBox resultBar;
     public Label save_label;
     public ComboBox<Integer> styear;
-    public VBox setting;
     public VBox dragArea;
     public ImageView optbt;
     public VBox menubar;
     public ComboBox<Integer> endyear;
     public TextField titlefilter;
     public Button savebt;
+    public ImageView suspendbt;
+    public VBox filterbar;
 
     private Pane graphPane;
     
@@ -77,13 +78,14 @@ public class GraphController {
         }
         init_graph_pane();
         init_event_bus();
-        init_filter_bar();
+        init_filter_bar(true);
     }
     private void init_year_selecter(ComboBox<Integer> seleter,List<Integer> range){
         seleter.getItems().clear();
         seleter.getItems().addAll(range);
     }
-    private void init_filter_bar(){
+    private void init_filter_bar(boolean first){
+
         int year = LocalDate.now().getYear();
         List<Integer> range = new ArrayList<>();
         for(int i = year;i>1900;){
@@ -95,42 +97,45 @@ public class GraphController {
                 i-=10;
             }
         }
+        titlefilter.clear();
         init_year_selecter(styear,range);
         init_year_selecter(endyear,range);
-        styear.setOnAction(event -> {
-            System.out.println("change");
-            if(endyear.getSelectionModel().getSelectedItem()==null){
-                range.clear();
-                for(int i = year;i>styear.getSelectionModel().getSelectedItem();){
-                    if(i>2000){
-                        range.add(i);
-                        i--;
-                    } else{
-                        range.add(i);
-                        i-=10;
+        if(first){
+            styear.setOnAction(event -> {
+                System.out.println("change");
+                if(endyear.getSelectionModel().getSelectedItem()==null){
+                    range.clear();
+                    for(int i = year;i>styear.getSelectionModel().getSelectedItem();){
+                        if(i>2000){
+                            range.add(i);
+                            i--;
+                        } else{
+                            range.add(i);
+                            i-=10;
+                        }
                     }
+                    endyear.getItems().clear();
+                    endyear.getItems().addAll(range);
                 }
-                endyear.getItems().clear();
-                endyear.getItems().addAll(range);
-            }
-        });
-        endyear.setOnAction(event -> {
-            System.out.println("change");
-            if(styear.getSelectionModel().getSelectedItem()==null){
-                range.clear();
-                for(int i = endyear.getSelectionModel().getSelectedItem();i>1900;){
-                    if(i>2000){
-                        range.add(i);
-                        i--;
-                    } else{
-                        range.add(i);
-                        i-=10;
+            });
+            endyear.setOnAction(event -> {
+                System.out.println("change");
+                if(styear.getSelectionModel().getSelectedItem()==null){
+                    range.clear();
+                    for(int i = endyear.getSelectionModel().getSelectedItem();i>1900;){
+                        if(i>2000){
+                            range.add(i);
+                            i--;
+                        } else{
+                            range.add(i);
+                            i-=10;
+                        }
                     }
+                    styear.getItems().clear();
+                    styear.getItems().addAll(range);
                 }
-                styear.getItems().clear();
-                styear.getItems().addAll(range);
-            }
-        });
+            });
+        }
     }
     private void init_info_bar(){
         save_label.setVisible(false);
@@ -171,6 +176,7 @@ public class GraphController {
                             resultBar.getChildren().add(box);
                             infoBar.setVisible(true);
                             infoBar.setManaged(true);
+                            resultBar.setManaged(true);
                             infoBar.toFront();
                         }
                     } catch (Exception e) {
@@ -281,8 +287,7 @@ public class GraphController {
 
     public void savegraph(MouseEvent mouseEvent) {
         System.out.println("save graph");
-        setting.setManaged(false);
-        setting.setVisible(false);
+        menubar.setVisible(false);
         executor.submit(()->{
             if(!Files.exists(Path.of("./PaperData/paperinfo.sqlite"))){
                 try {
@@ -313,10 +318,60 @@ public class GraphController {
     public void openTab(MouseEvent mouseEvent) {
         infoBar.setVisible(true);
         infoBar.setManaged(true);
+        if(resultBar.getChildren().isEmpty()){
+            resultBar.setManaged(false);
+        }
+        else {
+            resultBar.setManaged(true);
+        }
     }
 
     public void apply_filter(MouseEvent mouseEvent) {
+        int sy;
+        int ey;
+        Stream<Paper> temp = paperMap.values().stream();
+        Boolean filteY = false;
+        Boolean filteT = false;
+        String contain_text;
         log("apply filter");
+        graph.reset_style();
+        if(styear.getSelectionModel().getSelectedItem()!=null){
+            filteY = true;
+            sy=styear.getSelectionModel().getSelectedItem();
+        } else {
+            sy = 1900;
+        }
+        if(endyear.getSelectionModel().getSelectedItem()!=null){
+            filteY = true;
+            ey=endyear.getSelectionModel().getSelectedItem();
+        }else {
+            ey = LocalDate.now().getYear();
+        }
+        if (titlefilter.getText()!=null&& !titlefilter.getText().isEmpty()){
+            filteT = true;
+            contain_text = titlefilter.getText();
+        }else {
+            contain_text = "";
+        }
+        if(filteY){
+            temp = temp.filter(paper -> paper.getYear()>=sy&&paper.getYear()<=ey);
+        }
+        if(filteT){
+            temp = temp.filter(paper -> paper.getTitle().contains(contain_text)||paper.getTitle().contains(contain_text));
+        }
+        graph.filted_vertex(new HashSet<>(temp.map(Paper::get_uid).toList()));
+    }
+
+    public void suspend_graph(MouseEvent mouseEvent) {
+        now_build.cancel(true);
+        Server.getInstance().restartApi();
+        suspendbt.setVisible(false);
+        savebt.setDisable(false);
+    }
+
+    public void reset_filter(MouseEvent mouseEvent) {
+        init_filter_bar(false);
+        graph.reset_style();
     }
 
     private class  BuildGraph implements Runnable {
@@ -394,18 +449,20 @@ public class GraphController {
                 if(cache){
                     Paper t;
                     try{
-                        log(""+p.get_uid());
                         t = Utils.getPaper(p.get_uid());
-                        if(t!=null&&t.getCited_uid()!=null&&!t.getCited_uid().isEmpty()){
+                        if(t.getCited_uid()!=null&&!t.getCited_uid().isEmpty()){
                             log("use cache");
                             log(t.getCited_uid());
                             Stream<Integer> uids = Arrays.stream(t.getCited_uid().split(",")).map(Integer::valueOf);
                             List<Paper> temp = Utils.getPapers(uids.toList());
+                            paperMap.put(t.get_uid(), p);
+                            temp.stream().filter(pp -> !visited.contains(pp.get_uid())).forEach(pp -> paperMap.put(pp.get_uid(), pp));
+                            temp = Paper.filter(temp, new Paper.CitedFilter()).toList();
                             temp = depthFilte(temp,d+1);
                             List<Paper> finalTemp = temp;
                             Platform.runLater(() -> {
                                 graph.addNodes(finalTemp.stream().map(PaperVertex::new).toList());
-                                graph.addEdges(p.get_uid(), finalTemp.stream().map(Paper::get_uid).toList());
+                                graph.addEdges(t.get_uid(), finalTemp.stream().map(Paper::get_uid).toList());
                             });
                             temp.forEach(pp -> {
                                 search_depth.offer(d+1);
@@ -417,14 +474,11 @@ public class GraphController {
                         log(e.getMessage());
                     }
                 }
-                if(d<=2){
-                    results.add(api.GetFutureFromCited(p.getCited_url(), 20));
-                }else {
-                    results.add(api.GetFutureFromCited(p.getCited_url(), 10));
-                }
+                results.add(api.GetFutureFromCited(p.getCited_url(), 20));
                 search_depth.add(d + 1);
             }
             savebt.setDisable(false);
+            suspendbt.setVisible(false);
         }
     }
     private List<Paper> depthFilte(List<Paper> temp, int d) {

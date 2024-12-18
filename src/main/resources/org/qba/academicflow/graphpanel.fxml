@@ -14,9 +14,9 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/23.0.1" fx:controller="org.qba.academicflow.GraphController">
+<AnchorPane fx:id="root" prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.qba.academicflow.GraphController">
    <children>
-      <ImageView accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#openTab" pickOnBounds="true" scaleX="-1.0" smooth="false" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="10.0">
+      <ImageView accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#openTab" pickOnBounds="true" scaleX="-1.0" smooth="false" viewOrder="-1" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="10.0">
          <image>
             <Image url="@closebt.png" />
          </image>
@@ -24,7 +24,7 @@
             <Cursor fx:constant="OPEN_HAND" />
          </cursor>
       </ImageView>
-      <HBox fx:id="infoBar" viewOrder="-1" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+      <HBox fx:id="infoBar" viewOrder="-2" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
          <!-- 拖拽区域 - 放在HBox的开始位置 -->
          <VBox fx:id="dragArea" alignment="TOP_RIGHT" maxWidth="4" minWidth="4" prefWidth="4" styleClass="drag-area" viewOrder="-1">
             <ImageView accessibleRole="BUTTON" fitHeight="37.0" fitWidth="34.0" nodeOrientation="INHERIT" onMouseClicked="#closeTab" pickOnBounds="true" smooth="false">
@@ -44,12 +44,12 @@
                <Insets bottom="10" left="10" right="10" top="10" />
             </padding>
             <children>
-               <VBox fx:id="resultBar" alignment="TOP_CENTER" maxWidth="800"  HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+               <VBox fx:id="resultBar" alignment="TOP_CENTER" maxWidth="800" prefHeight="448.0" prefWidth="278.0" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                   <padding>
                      <Insets bottom="5" left="5" right="5" top="5" />
                   </padding>
                </VBox>
-               <VBox fx:id="setting" alignment="TOP_CENTER" maxWidth="Infinity" styleClass="setting-bar" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+               <VBox fx:id="filterbar" alignment="TOP_CENTER" maxWidth="Infinity" styleClass="setting-bar" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
                   <padding>
                      <Insets bottom="5" left="5" right="5" top="5" />
                   </padding>
@@ -92,18 +92,28 @@
                                  <Font size="16.0" />
                               </font>
                            </Label>
-                           <TextField fx:id="titlefilter" prefHeight="33.0" prefWidth="145.0" style="-fx-background-color: #ffffff; -fx-border-color: #dddddd; -fx-border-width: 1;" HBox.hgrow="ALWAYS" />
+                           <TextField fx:id="titlefilter" maxWidth="100.0" prefHeight="47.0" prefWidth="144.0" style="-fx-background-color: #ffffff; -fx-border-color: #dddddd; -fx-border-width: 1; -fx-font-family: 'Noto Sans CJK SC'; -fx-font-size: 16" HBox.hgrow="ALWAYS" />
                         </children>
                         <padding>
                            <Insets left="10.0" right="10.0" />
                         </padding>
                      </HBox>
-                     <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" VBox.vgrow="ALWAYS" />
-                     <Button mnemonicParsing="false" onMouseClicked="#apply_filter" prefHeight="47.0" prefWidth="108.0" styleClass="optbt" text="Apply">
-                        <font>
-                           <Font size="19.0" />
-                        </font>
-                     </Button>
+                     <HBox alignment="BOTTOM_CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" VBox.vgrow="ALWAYS">
+                        <children>
+                           <Button mnemonicParsing="false" onMouseClicked="#apply_filter" prefHeight="47.0" prefWidth="108.0" styleClass="optbt" text="Apply">
+                              <font>
+                                 <Font size="19.0" />
+                              </font>
+                           </Button>
+                           <Button mnemonicParsing="false" onMouseClicked="#reset_filter" prefHeight="47.0" prefWidth="108.0" styleClass="optbt" text="Reset">
+                              <font>
+                                 <Font size="19.0" />
+                              </font>
+                           </Button>
+                        </children>
+                        <padding>
+                           <Insets bottom="20.0" />
+                        </padding></HBox>
                   </children>
                </VBox>
             </children>
@@ -128,5 +138,13 @@
             <Font name="Noto Sans CJK SC" size="21.0" />
          </font>
       </Label>
+      <ImageView  viewOrder="-2" fx:id="suspendbt" fitHeight="31.0" fitWidth="30.0" layoutX="58.0" layoutY="17.0" nodeOrientation="INHERIT" onMouseClicked="#suspend_graph" pickOnBounds="true" preserveRatio="true"  AnchorPane.leftAnchor="58.0" AnchorPane.topAnchor="14.0">
+         <image>
+            <Image url="@suspend.png" />
+         </image>
+         <cursor>
+            <Cursor fx:constant="OPEN_HAND" />
+         </cursor>
+      </ImageView>
    </children>
 </AnchorPane>
