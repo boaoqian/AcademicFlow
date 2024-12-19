@@ -31,7 +31,15 @@ public class RelationshipGraph {
     private double nodeF = 500000;
     // 使用时间戳控制
     private long lastUpdate = 0;
-    private final long FRAME_INTERVAL = 1_000_000_000L / 60; // 60 FPS (1秒=1_000_000_000纳秒)
+    private long FRAME_INTERVAL = 1_000_000_000L / 100; //  FPS (1秒=1_000_000_000纳秒)
+
+    public void setNodeF(double F) {
+        nodeF = Math.max(Math.min(500000,F),10000);
+    }
+
+    public void setSpeed(int speed) {
+        FRAME_INTERVAL = 1_000_000_000L / speed;
+    }
 
     public RelationshipGraph() {
         root = new Pane();
@@ -385,10 +393,12 @@ public class RelationshipGraph {
                     dy=random.nextDouble()*5;
                 }
                 if (distance < 1) distance = 1;
-
                 double force = nodeF / (distance * distance);
                 if (n1.isDragging){
                     force*=0.1;
+                }
+                else if (distance < 50){
+                    force*=1.2;
                 }
                 n1.dx += dx * force / distance;
                 n1.dy += dy * force / distance;
@@ -406,6 +416,9 @@ public class RelationshipGraph {
                 dx+=random.nextDouble()*10;
             }
             double force = (distance - edgeL);
+            if(distance>500){
+                force*=2;
+            }
             dx *= force / distance;
             dy *= force / distance;
 

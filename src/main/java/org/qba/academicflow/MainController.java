@@ -19,7 +19,9 @@ import org.qba.backend.database.Utils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import static org.qba.academicflow.Server.log;
 
@@ -35,7 +37,13 @@ public class MainController {
     public AnchorPane mask;
     public VBox settingpane;
     public Button savechange;
+    public ListView<String> history_list;
+    public VBox history_list_pane;
+    public AnchorPane root;
 
+
+    private Set<String> history;
+    private boolean prompting = false;
     public void setDataModel(InfoModel userdata) {
         this.userdata = userdata;
     }
@@ -47,14 +55,14 @@ public class MainController {
             return;
         }
         else {
+            Server.add_history(userdata.search_name);
             switchScene(actionEvent);
         }
     }
 
-
     public void handleLucky(ActionEvent actionEvent) {
         Random rand = new Random();
-        userdata.search_name = ""+rand.nextInt(10000);
+        userdata.search_name = ""+rand.nextInt(1000,10000);
         switchScene(actionEvent);
     }
 
@@ -77,6 +85,16 @@ public class MainController {
     }
     @FXML
     public void initialize() {
+        history_list_pane.setVisible(false);
+        history = Server.load_history();
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if(prompting) {
+                log(newValue);
+                prompting = false;
+                return;
+            }
+            prompt(newValue);
+        });
         settingpane.setManaged(false);
         settingpane.setVisible(false);
         int now_year = LocalDate.now().getYear();
@@ -104,6 +122,34 @@ public class MainController {
         });
     }
 
+    public void prompt(String input) {
+        int i = 0;
+        if(input.isEmpty()){
+            history_list_pane.setVisible(false);
+            history_list_pane.toBack();
+            return;
+        }
+        history_list.getItems().clear();
+        for (var l: history) {
+            if (l.startsWith(input)&&!l.equals(input)) {
+                history_list.getItems().add(l);
+                i++;
+                if(i >= 3){
+                    break;
+                }
+            }
+        }
+        if (history_list.getItems().isEmpty()) {
+            history_list_pane.setVisible(false);
+            history_list_pane.toBack();
+            return;
+        }
+        history_list.setMaxHeight(42*history_list.getItems().size());
+        history_list.setPrefHeight(42*history_list.getItems().size());
+        history_list_pane.setVisible(true);
+        history_list_pane.toFront();
+    }
+
     public void EnterSearch(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
             log("Searching for: "+ searchField.getText());
@@ -112,6 +158,7 @@ public class MainController {
                 return;
             }
             else {
+                Server.add_history(userdata.search_name);
                 switchScene(keyEvent);
             }
         }
@@ -145,5 +192,17 @@ public class MainController {
         mask.setEffect(null);
         settingpane.setVisible(false);
         settingpane.setManaged(false);
+    }
+
+    public void select_history(MouseEvent mouseEvent) {
+        if(history_list.getSelectionModel().getSelectedItem()==null){
+            return;
+        }
+        prompting = true;
+        history_list_pane.setVisible(false);
+        history_list_pane.toBack();
+        String prompt = history_list.getSelectionModel().getSelectedItem();
+        searchField.setText(prompt);
+        searchField.requestFocus();
     }
 }

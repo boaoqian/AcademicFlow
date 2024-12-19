@@ -4,8 +4,15 @@ import javafx.event.*;
 import org.qba.backend.api.GoogleAPI;
 import org.qba.backend.paper.Paper;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -91,6 +98,43 @@ public class Server {
 
         public void publish(NodeEvent event) {
             handlers.forEach(handler -> handler.handle(event));
+        }
+    }
+    public static Set<String> load_history() {
+        String history_path = "PaperData/history.list";
+        Path path = Path.of(history_path);
+        if(Files.exists(path)) {
+            try{
+                return new HashSet<>(Files.readAllLines(path));
+            }catch (Exception e){
+                log(e.toString());
+                log("read history file failed");
+                return new HashSet<>();
+            }
+        }else {
+            try {
+                Files.createDirectories(Path.of("./PaperData"));
+                Files.createFile(Path.of("./PaperData/history.list"));
+            }catch (Exception e){
+                log(e.toString());
+                log("create history file failed");
+            }
+            return new HashSet<>();
+        }
+    }
+    public static void add_history(String history) {
+        if(history == null||history.length()<=2) {
+            return;
+        }
+        String history_path = "PaperData/history.list";
+        Set<String> history_list = load_history();
+        history_list.add(history);
+        try{
+            Files.write(Path.of(history_path),new ArrayList<>(history_list).subList(0,Math.min(history_list.size(),100)));
+        }catch (Exception e){
+            log(e.toString());
+            log("write history file failed");
+            return;
         }
     }
 }

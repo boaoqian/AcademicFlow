@@ -260,6 +260,7 @@ public class GraphController {
     }
 
     public void optMenuOpen(MouseEvent mouseEvent) {
+        menubar.toFront();
         if (menubar.isVisible()) {
             menubar.setVisible(false);
             menubar.setManaged(false);
@@ -349,7 +350,7 @@ public class GraphController {
         }
         if (titlefilter.getText()!=null&& !titlefilter.getText().isEmpty()){
             filteT = true;
-            contain_text = titlefilter.getText();
+            contain_text = titlefilter.getText().toLowerCase();
         }else {
             contain_text = "";
         }
@@ -357,7 +358,8 @@ public class GraphController {
             temp = temp.filter(paper -> paper.getYear()>=sy&&paper.getYear()<=ey);
         }
         if(filteT){
-            temp = temp.filter(paper -> paper.getTitle().contains(contain_text)||paper.getTitle().contains(contain_text));
+            temp = temp.filter(paper -> paper.getTitle().toLowerCase().contains(contain_text)
+                            ||paper.getTitle().toLowerCase().contains(contain_text));
         }
         graph.filted_vertex(new HashSet<>(temp.map(Paper::get_uid).toList()));
     }
@@ -482,9 +484,10 @@ public class GraphController {
         }
     }
     private List<Paper> depthFilte(List<Paper> temp, int d) {
-        if(d==1){
+        if(d<=1){
             if (temp.size() > 10) {
-                temp = Paper.filter(temp, new Paper.CitedCountFilter(10)).toList();
+                temp.stream().forEach(a->log(a.getYear()+""));
+                temp = temp.subList(0, 10);
             }
         }
         else if(d==2){
